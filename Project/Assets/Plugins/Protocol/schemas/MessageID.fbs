@@ -1,0 +1,9 @@
+namespace Protocol;
+
+enum MessageID : ushort
+{
+    HelloWorld,
+    Count,
+}
+
+table AssemblyMark {}

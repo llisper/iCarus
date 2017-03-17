@@ -1,0 +1,7 @@
+include "MessageID.fbs";
+namespace Protocol;
+
+table HelloWorld
+{
+    hail:string;
+}

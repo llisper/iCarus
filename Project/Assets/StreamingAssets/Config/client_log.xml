@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<log4net>
+    <appender name="UnityLogAppender" type="iCarus.Log.UnityLogAppender">
+        <layout type="log4net.Layout.PatternLayout">
+            <conversionPattern value="[%logger]: %message %exception"/>
+        </layout>
+    </appender>
+    <root>
+        <level value="DEBUG"/>
+        <appender-ref ref="UnityLogAppender" />
+    </root>
+</log4net>
