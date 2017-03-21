@@ -3,7 +3,7 @@
 namespace iCarus
 {
     /// <summary>
-    /// GameException作为游戏的异常基类, 各个功能模块可以根据需求继承这个类型. 并做扩展
+    /// Exception作为游戏的异常基类, 各个功能模块可以根据需求继承这个类型. 并做扩展
     /// 直接抛出System.Exception不是一个很好的选择, 因为处理异常的代码不能根据异常的类型来做不同的处理
     /// </summary>
     public class Exception : ApplicationException
@@ -36,12 +36,19 @@ namespace iCarus
         {
             get
             {
-                string name = GetType().Name;
-                name = name.EndsWith("Exception") ? name.Remove(name.Length - 9, 9) : name;
-                return string.Format("<b>[{0}]: {1}</b> ", name, mReason);
+                return string.Format("<b>[{0}]: {1}</b> ", Name, mReason);
             }
         }
 
-        string mReason = string.Empty;
+        public virtual string Name
+        {
+            get
+            {
+                string name = GetType().Name;
+                return name.EndsWith("Exception") ? name.Remove(name.Length - 9, 9) : name;
+            }
+        }
+
+        protected string mReason = string.Empty;
     }
 }

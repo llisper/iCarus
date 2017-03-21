@@ -88,7 +88,6 @@ namespace iCarus.Log
                         XmlConfigurator.Configure(stream);
                 }
                 LogRegistry.Initialize();
-                Network.NetLog.Info("Log Initialize");
             }
         }
 

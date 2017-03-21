@@ -23,7 +23,7 @@ namespace BallGame
         IEnumerator Init()
         {
             yield return StartCoroutine(Logging.Initialize("Config/server_log.xml"));
-            Singletons.Initialize();
+            // Singletons.Initialize();
 
             #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
             console.Initialize();

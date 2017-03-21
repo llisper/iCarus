@@ -2,11 +2,12 @@
 
 using System;
 using System.Reflection;
-using System.Collections.Generic;
+using System.Collections;
 
 namespace iCarus.Singleton
 {
-    public class SingletonLog : Log.Logging.Define<SingletonLog> { }
+    class SingletonLog : Log.Logging.Define<SingletonLog> { }
+
     public class SinletonException : Exception { }
 
     /// <summary>
@@ -60,7 +61,7 @@ namespace iCarus.Singleton
         /// 增加一个单件
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        public static void Add<T>() where T : new()
+        public static IEnumerator Add<T>(params object[] args)
         {
             Type type = typeof(T);
             BaseType baseType = GetBaseType(type);
@@ -82,26 +83,45 @@ namespace iCarus.Singleton
             }
             else if (BaseType.Singleton == baseType)
             {
-                inst = Activator.CreateInstance(type);
+                inst = Activator.CreateInstance(type, args);
             }
 
             if (null != inst)
             {
-                DoInitializeSingleton(inst);
+                type.InvokeMember(
+                    "sInstance",
+                    BindingFlags.FlattenHierarchy | BindingFlags.SetField | BindingFlags.NonPublic | BindingFlags.Static,
+                    null,
+                    null,
+                    new object[] { inst });
+
+                object ret = CallSingletonMethod("SingletonInit", inst, inst.GetType());
+                if (null != ret && ret is IEnumerator)
+                    yield return root.StartCoroutine((IEnumerator)ret);
+
                 root.singletonInstances.Add(inst);
+                SingletonLog.InfoFormat("{0} Added", type.FullName);
             }
         }
 
         /// <summary>
-        /// 对所有单件进行初始化, 初始化流程是:
-        /// 1. 对所有单件调用SingletonAwake函数
-        /// 2. 对所有单件调用SinletonStart函数
+        /// 对所有单件进行初始化, 对所有单件调用SingletonStart, 如果SingletonStart, 则使用协程等待
         /// </summary>
-        public static void Initialize()
+        /*
+        public static IEnumerator Start()
         {
-            DoSingletonAwake(root.singletonInstances);
-            SingletonLog.InfoFormat("Initialize {0} singletons", root.singletonInstances.Count);
+            SingletonLog.InfoFormat("Start Singletons({0}):", root.singletonInstances.Count);
+            for (int i = 0; i < root.singletonInstances.Count; ++i)
+            {
+                var inst = root.singletonInstances[i];
+                object ret = CallSingletonMethod("SingletonStart", inst, inst.GetType());
+                if (null != ret && ret is IEnumerator)
+                    yield return root.StartCoroutine((IEnumerator)ret);
+                SingletonLog.InfoFormat("{0} Started", inst.GetType().FullName);
+            }
+            SingletonLog.InfoFormat("Done!");
         }
+        */
 
         enum BaseType
         {
@@ -124,31 +144,17 @@ namespace iCarus.Singleton
             return BaseType.None;
         }
 
-        static void DoSingletonAwake(List<object> instances)
-        {
-            for (int i = 0; i < instances.Count; ++i)
-                CallSingletonMethod("SingletonAwake", instances[i]);
-
-            for (int i = 0; i < instances.Count; ++i)
-                CallSingletonMethod("SingletonStart", instances[i]);
-        }
-
-        static void CallSingletonMethod(string methodName, object inst)
-        {
-            CallSingletonMethod(methodName, inst, inst.GetType());
-        }
-
-        static void CallSingletonMethod(string methodName, object inst, Type type)
+        static object CallSingletonMethod(string methodName, object inst, Type type)
         {
             if (type == typeof(object))
-                return;
+                return null;
 
             if (type.IsGenericType)
             {
                 if (type.GetGenericTypeDefinition() == typeof(Singleton<>) ||
                     type.GetGenericTypeDefinition() == typeof(SingletonBehaviour<>))
                 {
-                    return;
+                    return null;
                 }
             }
 
@@ -157,20 +163,9 @@ namespace iCarus.Singleton
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
             if (null != method)
-                method.Invoke(inst, null);
+                return method.Invoke(inst, null);
             else
-                CallSingletonMethod(methodName, inst, type.BaseType);
-        }
-
-        internal static void DoInitializeSingleton(object inst)
-        {
-            Type type = inst.GetType();
-            type.InvokeMember(
-                "sInstance",
-                BindingFlags.FlattenHierarchy | BindingFlags.SetField | BindingFlags.NonPublic | BindingFlags.Static,
-                null,
-                null, 
-                new object[] { inst });
+                return CallSingletonMethod(methodName, inst, type.BaseType);
         }
     }
 }

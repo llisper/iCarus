@@ -22,7 +22,7 @@ namespace BallGame
         IEnumerator Init()
         {
             yield return StartCoroutine(Logging.Initialize("Config/client_log.xml"));
-            Singletons.Initialize();
+            // Singletons.Initialize();
 
             UdpClient.Configuration netConfig = new UdpClient.Configuration()
             {
