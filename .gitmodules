@@ -1,3 +1,6 @@
 [submodule "SharpFlatbuffers"]
 	path = SharpFlatbuffers
 	url = https://github.com/llisper/SharpFlatbuffers.git
+[submodule "lidgren-network-gen3"]
+	path = lidgren-network-gen3
+	url = https://github.com/llisper/lidgren-network-gen3.git
