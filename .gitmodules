@@ -1,0 +1,3 @@
+[submodule "SharpFlatbuffers"]
+	path = SharpFlatbuffers
+	url = https://github.com/llisper/SharpFlatbuffers.git
