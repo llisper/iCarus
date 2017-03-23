@@ -25,7 +25,7 @@ namespace iCarus.Singleton
             mConstantRepaint = false;
             for (int i = 0; i < script.singletonInstances.Count; ++i)
             {
-                object inst = script.singletonInstances[i];
+                ISingleton inst = script.singletonInstances[i];
                 if (inst is MonoBehaviour)
                     continue;
 

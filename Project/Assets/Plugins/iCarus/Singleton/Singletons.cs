@@ -8,26 +8,43 @@ namespace iCarus.Singleton
 {
     class SingletonLog : Log.Logging.Define<SingletonLog> { }
 
-    public class SinletonException : Exception { }
+    public class SingletonException : Exception { }
+
+    public interface ISingleton
+    {
+        void DestroySingleton();
+    }
 
     /// <summary>
     /// 普通单件继承这个类, 并且标记为sealed
     /// </summary>
     /// <typeparam name="T">单件类型</typeparam>
-    public class Singleton<T>
+    public class Singleton<T> : ISingleton
     {
         internal static T sInstance = default(T);
         public static T Instance { get { return sInstance; } }
+
+        public virtual void DestroySingleton()
+        {
+            Singletons.Remove(this);
+            sInstance = default(T);
+        }
     }
 
     /// <summary>
     /// Unity使用MonoBehaviour的单件继承这个类, 并且标记为sealed
     /// </summary>
     /// <typeparam name="T">单件类型</typeparam>
-    public class SingletonBehaviour<T> : MonoBehaviour
+    public class SingletonBehaviour<T> : MonoBehaviour, ISingleton
     {
         internal static T sInstance = default(T);
         public static T Instance { get { return sInstance; } }
+
+        public virtual void DestroySingleton()
+        {
+            Singletons.Remove(this);
+            sInstance = default(T);
+        }
     }
 
     /// <summary>
@@ -60,47 +77,70 @@ namespace iCarus.Singleton
         /// <summary>
         /// 增加一个单件
         /// </summary>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="T">单件类型</typeparam>
+        /// <param name="args">传递给单件构造函数的参数, 对MonoBehaviour不适用</param>
+        /// <returns>迭代器</returns>
         public static IEnumerator Add<T>(params object[] args)
         {
-            Type type = typeof(T);
+            return Add(typeof(T), args);
+        }
+
+        /// <summary>
+        /// 增加一个单件
+        /// </summary>
+        /// <param name="type">单件类型</param>
+        /// <param name="args">传递给单件构造函数的参数, 对MonoBehaviour不适用</param>
+        /// <returns>迭代器</returns>
+        public static IEnumerator Add(Type type, params object[] args)
+        {
             BaseType baseType = GetBaseType(type);
             if (baseType == BaseType.None ||
                 !type.IsSealed ||
                 type.IsAbstract ||
                 type.IsGenericType)
             {
-                Exception.Throw<SinletonException>("Type {0} is not qualify for a singleton", type.FullName);
+                Exception.Throw<SingletonException>("Type {0} is not qualify for a singleton", type.FullName);
             }
 
-            object inst = null;
+            ISingleton inst = null;
             if (BaseType.SingletonBehaviour == baseType)
             {
                 GameObject go = new GameObject(type.Name, type);
                 go.transform.parent = root.transform;
                 go.transform.Reset();
-                inst = go.GetComponent(type);
+                inst = (ISingleton)go.GetComponent(type);
             }
             else if (BaseType.Singleton == baseType)
             {
-                inst = Activator.CreateInstance(type, args);
+                inst = (ISingleton)Activator.CreateInstance(type, args);
             }
 
-            if (null != inst)
+            if (null == inst)
+                Exception.Throw<SingletonException>("Failed to create singleton: " + type.FullName);
+
+            type.InvokeMember(
+                "sInstance",
+                BindingFlags.FlattenHierarchy | BindingFlags.SetField | BindingFlags.NonPublic | BindingFlags.Static,
+                null,
+                null,
+                new object[] { inst });
+
+            object ret = CallSingletonMethod("SingletonInit", inst, inst.GetType());
+            if (null != ret && ret is IEnumerator)
+                yield return root.StartCoroutine((IEnumerator)ret);
+
+            root.singletonInstances.Add(inst);
+            SingletonLog.InfoFormat("{0} Added", type.FullName);
+            yield return inst;
+        }
+
+        public static void Remove(ISingleton singleton)
+        {
+            if (root.singletonInstances.Remove(singleton))
             {
-                type.InvokeMember(
-                    "sInstance",
-                    BindingFlags.FlattenHierarchy | BindingFlags.SetField | BindingFlags.NonPublic | BindingFlags.Static,
-                    null,
-                    null,
-                    new object[] { inst });
-
-                object ret = CallSingletonMethod("SingletonInit", inst, inst.GetType());
-                if (null != ret && ret is IEnumerator)
-                    yield return root.StartCoroutine((IEnumerator)ret);
-
-                root.singletonInstances.Add(inst);
-                SingletonLog.InfoFormat("{0} Added", type.FullName);
+                if (singleton is MonoBehaviour)
+                    GameObject.Destroy(((MonoBehaviour)singleton).gameObject);
+                SingletonLog.InfoFormat("{0} Removed", singleton.GetType().FullName);
             }
         }
 

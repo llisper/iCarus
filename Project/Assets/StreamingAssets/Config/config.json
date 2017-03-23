@@ -1,1 +1,1 @@
-﻿{    "logPort" : 11011,    "pacMan" : {        "appIdentifier" : "Test",        "port" : 11012,        "map" : "PacMan_1",        "beanRespawnInterval" : 3.0,        "beanTotal" : 20,        "beanSpawnRadius" : 20.0,        "maxConnection" : 2    }}
+﻿{    "logPort" : 11011,    "pacMan" : {        "appIdentifier" : "Pac-Man",        "host" : "localhost",        "port" : 11012,        "map" : "PacMan_1",        "beanRespawnInterval" : 3.0,        "beanTotal" : 20,        "beanSpawnRadius" : 20.0,        "maxConnection" : 2    }}

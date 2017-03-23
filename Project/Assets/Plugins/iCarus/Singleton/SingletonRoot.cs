@@ -18,10 +18,10 @@ namespace iCarus.Singleton
         internal interface IEditorDrawer
         {
             bool constantRepaint { get; }
-            void Draw(object inst);
+            void Draw(ISingleton inst);
         }
 
-        internal List<object> singletonInstances = new List<object>();
+        internal List<ISingleton> singletonInstances = new List<ISingleton>();
         internal static Dictionary<Type, IEditorDrawer> editorDrawers = new Dictionary<Type, IEditorDrawer>();
 
         internal static void AddEditorDrawer<T>(IEditorDrawer drawer)

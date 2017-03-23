@@ -19,6 +19,7 @@ namespace Foundation
         public class PacMan
         {
             public string appIdentifier = "Test";
+            public string host = "localhost";
             public int port = 11012;
             public string map = "PacMan_1";
             public float beanRespawnInterval = 3f;
@@ -79,14 +80,15 @@ namespace Foundation
         void LogConfig(StringBuilder log, string name, object inst, int level = 0)
         {
             log.Append(' ', 3 * level);
-            if (!inst.GetType().IsClass)
+            Type type = inst.GetType();
+            if (type.IsPrimitive || inst is string)
             {
                 log.AppendFormat(" - {0}: {1}\n", name, inst);
             }
             else
             {
                 log.AppendFormat(" - {0}:\n", name);
-                foreach (var field in inst.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
+                foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
                     LogConfig(log, field.Name, field.GetValue(inst), level + 1);
             }
         }

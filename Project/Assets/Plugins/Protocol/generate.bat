@@ -3,7 +3,7 @@ cd /d "%~dp0"
 call "%VS140COMNTOOLS%vsvars32.bat"
 
 set sln=SharpFlatbuffers.sln
-set dir=e:\code\SharpFlatbuffers\
+set dir=..\..\..\..\SharpFlatbuffers\
 set cfg=Debug
 
 msbuild /p:Configuration=%cfg% %dir%%sln%

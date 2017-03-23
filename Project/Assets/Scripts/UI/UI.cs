@@ -24,7 +24,11 @@ namespace SimpleUI
 
         public T Show<T>() where T : Component
         {
-            Type type = typeof(T);
+            return (T)Show(typeof(T));
+        }
+
+        public Component Show(Type type)
+        {
             Component panel = null;
             if (!mPanels.TryGetValue(type, out panel))
             {
@@ -42,16 +46,21 @@ namespace SimpleUI
                     }
                 }
             }
-            return (T)panel;
+            return panel;
         }
 
         public void Close<T>()
         {
+            Close(typeof(T));
+        }
+
+        public void Close(Type type)
+        {
             Component panel;
-            if (mPanels.TryGetValue(typeof(T), out panel))
+            if (mPanels.TryGetValue(type, out panel))
             {
                 Destroy(panel.gameObject);
-                mPanels.Remove(typeof(T));
+                mPanels.Remove(type);
             }
         }
 

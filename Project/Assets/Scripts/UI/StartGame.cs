@@ -18,12 +18,14 @@ namespace SimpleUI
         {
             if (null != onCreateGame)
                 onCreateGame();
+            UI.Instance.Close(GetType());
         }
 
         public void JoinGame()
         {
             if (null != onJoinGame)
                 onJoinGame(hostInput.text, int.Parse(portInput.text));
+            UI.Instance.Close(GetType());
         }
     }
 }

@@ -42,6 +42,29 @@ namespace iCarus.Coex
         }
 
         /// <summary>
+        /// 启动多个协程, 顺序执行, 不支持返回值
+        /// </summary>
+        /// <param name="etors">协程函数列表</param>
+        /// <returns></returns>
+        public Coex BatchCoroutines(params IEnumerator[] etors)
+        {
+            if (etors.Length > 0)
+                return StartCoroutine(_BatchCoroutines(etors));
+            else
+                return null;
+        }
+
+        IEnumerator _BatchCoroutines(IEnumerator[] etors)
+        {
+            foreach (var etor in etors)
+            {
+                Coex coex = StartCoroutine(etor);
+                yield return coex;
+                coex.CheckError();
+            }
+        }
+
+        /// <summary>
         /// 停止协程的执行
         /// </summary>
         /// <param name="routine">协程object</param>
