@@ -1,9 +1,10 @@
 ﻿using FlatBuffers;
+using Lidgren.Network;
 using Protocol;
 
 namespace iCarus.Network
 {
-    public delegate int MessageHandler(ByteBuffer byteBuffer);
+    public delegate int MessageHandler(NetConnection connection, ByteBuffer byteBuffer);
 
     public class MessageDispatcher
     {
@@ -12,11 +13,11 @@ namespace iCarus.Network
             mHandlers[(int)id] = handler;
         }
 
-        public void Fire(MessageID id, ByteBuffer byteBuffer)
+        public void Fire(NetConnection connection, MessageID id, ByteBuffer byteBuffer)
         {
             MessageHandler handler = mHandlers[(int)id];
             if (null != handler)
-                handler(byteBuffer);
+                handler(connection, byteBuffer);
         }
 
         MessageHandler[] mHandlers = new MessageHandler[(int)MessageID.Count];

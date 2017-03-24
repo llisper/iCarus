@@ -121,10 +121,7 @@ namespace iCarus.Network
             return mClient.SendMessage(msg, method, sequenceChannel);
         }
 
-#region receiving thread
-#endregion receiving thread
-
-#region internal
+        #region internal
         void HandleDebugMessage(NetIncomingMessage message)
         {
             switch (message.MessageType)
@@ -175,7 +172,7 @@ namespace iCarus.Network
             try
             {
                 message.ReadBytes(byteBuffer.Data, 0, len);
-                dispatcher.Fire(id, byteBuffer);
+                dispatcher.Fire(message.SenderConnection, id, byteBuffer);
             }
             finally
             {
@@ -186,6 +183,6 @@ namespace iCarus.Network
         NetClient mClient;
         Configuration mConfig;
         MessageDispatcher mDispatcher = new MessageDispatcher();
-#endregion internal
+        #endregion internal
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Collections.Generic;
 
 using Protocol;
 using FlatBuffers;
@@ -29,6 +30,36 @@ namespace iCarus.Network
             public int defaultOutgoingMessageCapacity = 16384;
             public OnIncommingConnection onIncommingConnection;
             public OnConnectionStatusChanged onConnectionStatusChanged;
+        }
+
+        public NetSendResult SendMessage(
+            MessageID id,
+            FlatBufferBuilder fbb,
+            NetConnection recipient,
+            NetDeliveryMethod method,
+            int sequenceChannel = 0)
+        {
+            NetOutgoingMessage msg = mServer.CreateMessage();
+            msg.Write((ushort)id);
+            ushort len = (ushort)fbb.Offset;
+            msg.Write(len);
+            msg.Write(fbb.DataBuffer.Data, fbb.DataBuffer.Position, fbb.Offset);
+            return mServer.SendMessage(msg, recipient, method, sequenceChannel);
+        }
+
+        public void SendMessage(
+            MessageID id,
+            FlatBufferBuilder fbb,
+            IList<NetConnection> recipients,
+            NetDeliveryMethod method,
+            int sequenceChannel = 0)
+        {
+            NetOutgoingMessage msg = mServer.CreateMessage();
+            msg.Write((ushort)id);
+            ushort len = (ushort)fbb.Offset;
+            msg.Write(len);
+            msg.Write(fbb.DataBuffer.Data, fbb.DataBuffer.Position, fbb.Offset);
+            mServer.SendMessage(msg, recipients, method, sequenceChannel);
         }
 
         public void Start(Configuration config)
@@ -192,17 +223,12 @@ namespace iCarus.Network
             try
             {
                 message.ReadBytes(byteBuffer.Data, 0, len);
-                dispatcher.Fire(id, byteBuffer);
+                dispatcher.Fire(message.SenderConnection, id, byteBuffer);
             }
             finally
             {
                 ByteBufferPool.Dealloc(ref byteBuffer);
             }
-        }
-
-        internal NetOutgoingMessage CreateMessage()
-        {
-            return mServer.CreateMessage();
         }
 
         NetServer mServer;

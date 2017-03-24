@@ -2,8 +2,9 @@ namespace Protocol;
 
 enum MessageID : ushort
 {
-    HelloWorld,
+    SnapshotDelta,
+    SnapshotFull,
     Count,
 }
 
-table AssemblyMark {}
+table ProtocolInitializer {}

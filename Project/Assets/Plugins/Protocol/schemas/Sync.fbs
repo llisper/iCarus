@@ -1,0 +1,41 @@
+include "MessageID.fbs";
+namespace Protocol;
+
+struct Vec3
+{
+    x:float;
+    y:float;
+    z:float;
+}
+
+union TickObject
+{
+    TestObject1,
+    TestObject2
+}
+
+table TickObjectBox
+{
+    tick_object:TickObject;
+}
+
+table SnapshotDelta
+{
+    tick_count:uint;
+    tick_object:[TickObjectBox];
+}
+
+table SnapshotFull
+{
+}
+
+table TestObject1
+{
+    pos:Vec3;
+    rot:Vec3;
+}
+
+table TestObject2
+{
+    count:int;
+}

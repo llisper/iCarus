@@ -7,7 +7,7 @@ namespace iCarus.Network
         static FlatBufferBuilder sBuilder;
         static bool sLocked;
         
-        internal static void Initialize(int defaultOutgoingMessageCapacity = 16384)
+        public static void Initialize(int defaultOutgoingMessageCapacity = 16384)
         {
             sBuilder = new FlatBufferBuilder(defaultOutgoingMessageCapacity);
         }

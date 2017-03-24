@@ -29,6 +29,22 @@ namespace Foundation
         }
         public PacMan pacMan = new PacMan();
 
+        [Serializable]
+        public class Server
+        {
+            public float tickrate = 0.015f; // 66.6 t/s
+            public float updaterate = 0.045f; // 45 ms/snapshot, do snapshot every 3 ticks
+        }
+        public Server server = new Server();
+
+        [Serializable]
+        public class Client
+        {
+            public float tickrate = 0.015f; // 66.6 t/s
+            public float cmdrate = 0.03f; // 33.3 p/s send input every 2 ticks
+        }
+        public Client client = new Client();
+
         #endregion configuration
 
         string mConfigFileName;
