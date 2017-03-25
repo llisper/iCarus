@@ -6,7 +6,7 @@
         </layout>
     </appender>
     <root>
-        <level value="DEBUG"/>
+        <level value="Info"/>
         <appender-ref ref="UnityLogAppender" />
     </root>
 </log4net>

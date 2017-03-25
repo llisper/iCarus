@@ -1,12 +1,17 @@
 ﻿using UnityEngine;
 using UnityEngine.Rendering;
 
+using System;
 using System.Collections;
 
 using iCarus.Log;
 using iCarus.Coex;
+using iCarus.Network;
 using iCarus.Singleton;
+using SimpleUI;
+using Protocol;
 using Foundation;
+using FlatBuffers;
 
 public class GameException : iCarus.Exception { }
 public class GameLog : Logging.Define<GameLog> { }
@@ -41,11 +46,39 @@ public class GameInitializer : MonoBehaviour
 
     IEnumerator AwakeRoutine()
     {
+        FlatBuffersInitializer.Initialize(typeof(ProtocolInitializer).Assembly);
+        MessageBuilder.Initialize();
         yield return StartCoroutine(InitializeLog());
         yield return StartCoroutine(Singletons.Add<AppConfig>("Config/config.json"));
         yield return StartCoroutine(Singletons.Add<CoexEngine>());
 
-        UnityEngine.SceneManagement.SceneManager.LoadScene("PacMan");
+        if (!isHeadless)
+        {
+            UI.Instance.Show<SceneList>();
+        }
+        else
+        {
+            string scene = null;
+            string[] args = Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length; ++i)
+            {
+                if (args[i] == "--scene" && i < args.Length - 1)
+                {
+                    scene = args[i + 1];
+                    break;
+                }
+            }
+
+            if (null != scene)
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadScene(scene);
+            }
+            else
+            {
+                GameLog.Error("specify scene on command line, eg. --scene PacMan");
+                Application.Quit();
+            }
+        }
     }
 
     IEnumerator InitializeLog()

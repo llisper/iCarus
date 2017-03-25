@@ -172,11 +172,14 @@ namespace iCarus.Network
             try
             {
                 message.ReadBytes(byteBuffer.Data, 0, len);
-                dispatcher.Fire(message.SenderConnection, id, byteBuffer);
+                var result = dispatcher.Fire(message.SenderConnection, id, byteBuffer, message);
+                if (result != MessageHandleResult.Processing)
+                    ByteBufferPool.Dealloc(ref byteBuffer);
             }
-            finally
+            catch (Exception e)
             {
                 ByteBufferPool.Dealloc(ref byteBuffer);
+                NetLog.Exception("HandleData throws exception", e);
             }
         }
 

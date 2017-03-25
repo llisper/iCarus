@@ -10,32 +10,57 @@ struct Vec3
 
 union TickObject
 {
-    TestObject1,
-    TestObject2
+    MovingSphere,
+    TickObject2
 }
 
-table TickObjectBox
+// MovingSphere
+table MovingSphere
 {
-    tick_object:TickObject;
+    full:MovingSphereFull;
+    delta:MovingSphereDelta;
 }
 
-table SnapshotDelta
-{
-    tick_count:uint;
-    tick_object:[TickObjectBox];
-}
-
-table SnapshotFull
-{
-}
-
-table TestObject1
+table MovingSphereDelta
 {
     pos:Vec3;
     rot:Vec3;
 }
 
-table TestObject2
+table MovingSphereFull
+{
+    pos:Vec3;
+    rot:Vec3;
+}
+
+// TickObject2
+table TickObject2Full
 {
     count:int;
 }
+
+table TickObject2Delta
+{
+    count:int;
+}
+
+table TickObject2
+{
+    full:TickObject2Full;
+    delta:TickObject2Delta;
+}
+
+table TickObjectBox
+{
+    id:int;
+    tick_object:TickObject;
+}
+
+table Snapshot
+{
+    tick_now:uint;
+    tick_num:uint;
+    full:bool;
+    tick_object:[TickObjectBox];
+}
+

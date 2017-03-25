@@ -32,33 +32,31 @@ namespace iCarus.Network
             public OnConnectionStatusChanged onConnectionStatusChanged;
         }
 
+        public NetOutgoingMessage CreateMessage(MessageID id, FlatBufferBuilder fbb)
+        {
+            NetOutgoingMessage msg = mServer.CreateMessage();
+            msg.Write((ushort)id);
+            ushort len = (ushort)fbb.Offset;
+            msg.Write(len);
+            msg.Write(fbb.DataBuffer.Data, fbb.DataBuffer.Position, fbb.Offset);
+            return msg;
+        }
+
         public NetSendResult SendMessage(
-            MessageID id,
-            FlatBufferBuilder fbb,
+            NetOutgoingMessage msg,
             NetConnection recipient,
             NetDeliveryMethod method,
             int sequenceChannel = 0)
         {
-            NetOutgoingMessage msg = mServer.CreateMessage();
-            msg.Write((ushort)id);
-            ushort len = (ushort)fbb.Offset;
-            msg.Write(len);
-            msg.Write(fbb.DataBuffer.Data, fbb.DataBuffer.Position, fbb.Offset);
             return mServer.SendMessage(msg, recipient, method, sequenceChannel);
         }
 
         public void SendMessage(
-            MessageID id,
-            FlatBufferBuilder fbb,
+            NetOutgoingMessage msg,
             IList<NetConnection> recipients,
             NetDeliveryMethod method,
             int sequenceChannel = 0)
         {
-            NetOutgoingMessage msg = mServer.CreateMessage();
-            msg.Write((ushort)id);
-            ushort len = (ushort)fbb.Offset;
-            msg.Write(len);
-            msg.Write(fbb.DataBuffer.Data, fbb.DataBuffer.Position, fbb.Offset);
             mServer.SendMessage(msg, recipients, method, sequenceChannel);
         }
 
@@ -223,7 +221,7 @@ namespace iCarus.Network
             try
             {
                 message.ReadBytes(byteBuffer.Data, 0, len);
-                dispatcher.Fire(message.SenderConnection, id, byteBuffer);
+                dispatcher.Fire(message.SenderConnection, id, byteBuffer, message);
             }
             finally
             {

@@ -2,8 +2,7 @@ namespace Protocol;
 
 enum MessageID : ushort
 {
-    SnapshotDelta,
-    SnapshotFull,
+    Snapshot,
     Count,
 }
 
