@@ -16,6 +16,7 @@
     },
     "client": {
         "tickrate": 0.015,
-        "cmdrate": 0.03
+        "cmdrate": 0.03,
+        "lerpdelay": 0.09
     }
 }

@@ -1,12 +1,31 @@
 ﻿using UnityEngine;
+
+using System;
 using System.Collections.Generic;
+
 using Protocol;
+using Foundation;
 using FlatBuffers;
 
 namespace Prototype
 {
     public class SyncManager : MonoBehaviour
     {
+        public bool hasFullUpdated { get { return mHasFullUpdated; } }
+        public uint serverTick { get { return mServerTick; } }
+        public float timer { get { return mTimer; } }
+        public int snapshotCount { get { return mCachedSnapshots.Count; } }
+        [NonSerialized]
+        public float timeScale = 1f;
+        [NonSerialized]
+        public uint cacheBeforeLerping;
+
+        public void Init()
+        {
+            cacheBeforeLerping = (uint)Mathf.CeilToInt(AppConfig.Instance.client.lerpdelay / AppConfig.Instance.server.updaterate);
+            mInitialized = true;
+        }
+
         public void FullUpdate(Snapshot snapshot)
         {
             TickObjectBox tob = InstancePool.Get<TickObjectBox>();
@@ -37,40 +56,45 @@ namespace Prototype
 
         void Update()
         {
-            if (null == mProcessing && mCachedSnapshots.Count < 2)
+            if (!mInitialized || 
+                (null == mProcessing && mCachedSnapshots.Count < cacheBeforeLerping))
+            {
                 return;
+            }
 
             if (null == mProcessing)
                 mProcessing = mCachedSnapshots.Dequeue();
 
-            float timeScale = 1f;
+            timeScale = 1f;
             float sur = TClient.Instance.serverUpdaterate;
             if (mCachedSnapshots.Count > 1)
             {
                 int k = mCachedSnapshots.Count;
-                timeScale = ((k + 1) * sur - mTimer) / (2 * sur - mTimer);
+                timeScale = ((k + 1) * sur - mTimer) / (cacheBeforeLerping * sur - mTimer);
             }
 
-            mTimer += Mathf.Min(Time.deltaTime * timeScale, sur);
+            mTimer += Time.deltaTime * timeScale;
             Snapshot ss = InstancePool.Get<Snapshot>();
-            Snapshot.GetRootAsSnapshot(mProcessing, ss);
-            Lerping(Mathf.Min(1f, mTimer / sur), ss);
 
-            if (mTimer >= sur)
+            while (true)
             {
-                mServerTick = ss.TickNow;
-                ByteBufferPool.Dealloc(ref mProcessing);
-                if (mCachedSnapshots.Count == 0)
+                float nt = Mathf.Min(1f, mTimer / sur);
+                Snapshot.GetRootAsSnapshot(mProcessing, ss);
+                Lerping(nt, ss);
+
+                if (mTimer >= sur)
                 {
-                    mTimer = 0f;
-                }
-                else
-                {
-                    mProcessing = mCachedSnapshots.Dequeue();
                     mTimer -= sur;
-                    Snapshot.GetRootAsSnapshot(mProcessing, ss);
-                    Lerping(mTimer / sur, ss);
+                    mServerTick = ss.TickNow;
+                    ByteBufferPool.Dealloc(ref mProcessing);
+                    if (mCachedSnapshots.Count > 0)
+                    {
+                        mProcessing = mCachedSnapshots.Dequeue();
+                        if (mTimer > 0)
+                            continue;
+                    }
                 }
+                break;
             }
         }
 
@@ -86,6 +110,7 @@ namespace Prototype
             }
         }
 
+        bool mInitialized = false;
         bool mHasFullUpdated = false;
         uint mServerTick = 0;
         float mTimer = 0f;

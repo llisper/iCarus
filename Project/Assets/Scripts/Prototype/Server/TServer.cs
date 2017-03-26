@@ -24,8 +24,8 @@ namespace Prototype
     {
         public float tickrate { get; private set; }
         public float updaterate { get; private set; }
-
         public uint tickCount { get { return mTickCount; } }
+        public uint snapshotOverTick { get { return mSnapshotOverTick; } }
         public List<ITickObject> tickObjects { get { return mTickObjects; } }
 
         public void StartServer()

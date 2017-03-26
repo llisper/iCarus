@@ -29,6 +29,7 @@ namespace Prototype
             cmdrate = AppConfig.Instance.client.cmdrate;
             mCmdOverTick = (uint)Mathf.FloorToInt(cmdrate / tickrate);
 
+            mSyncManager.Init();
 
             var prefab = Resources.Load("Prototype/Cube");
             GameObject go = (GameObject)Instantiate(prefab, transform);
