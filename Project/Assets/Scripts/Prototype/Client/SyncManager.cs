@@ -41,10 +41,10 @@ namespace Prototype
             mHasFullUpdated = true;
         }
 
-        public void AddDelta(ByteBuffer byteBuffer)
+        public void AddDelta(uint tick, ByteBuffer byteBuffer)
         {
-            if (!mHasFullUpdated)
-                TCLog.Error("a full update must prior to delta update");
+            if (!mHasFullUpdated || tick <= mServerTick)
+                TCLog.WarnFormat("drop delta update, hasFullUpdated:{0}, tick:{1}, serverTick:{2}", mHasFullUpdated, tick, mServerTick);
             else
                 mCachedSnapshots.Enqueue(byteBuffer);
         }
@@ -67,7 +67,7 @@ namespace Prototype
 
             timeScale = 1f;
             float sur = TClient.Instance.serverUpdaterate;
-            if (mCachedSnapshots.Count > 1)
+            if (mCachedSnapshots.Count > cacheBeforeLerping - 1)
             {
                 int k = mCachedSnapshots.Count;
                 timeScale = ((k + 1) * sur - mTimer) / (cacheBeforeLerping * sur - mTimer);

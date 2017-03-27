@@ -14,6 +14,10 @@ namespace Foundation
     {
         #region configuration
         public int logPort = 11011;
+        public float simulatedDuplicatesChance = 0f;
+        public float simulatedLoss = 0f;
+        public float simulatedMinimumLatency = 0f;
+        public float simulatedRandomLatency = 0f;
 
         [Serializable]
         public class PacMan

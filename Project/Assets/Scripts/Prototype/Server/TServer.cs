@@ -27,6 +27,7 @@ namespace Prototype
         public uint tickCount { get { return mTickCount; } }
         public uint snapshotOverTick { get { return mSnapshotOverTick; } }
         public List<ITickObject> tickObjects { get { return mTickObjects; } }
+        public NetServer netServer { get { return mUdpListener.netServer; } }
 
         public void StartServer()
         {
@@ -44,12 +45,21 @@ namespace Prototype
 
             UdpListener.Configuration netConfig = new UdpListener.Configuration()
             {
-                appIdentifier = AppConfig.Instance.pacMan.appIdentifier,
-                port = AppConfig.Instance.pacMan.port,
-                maxConnections = AppConfig.Instance.pacMan.maxConnection,
+                netPeerConfig = new NetPeerConfiguration(AppConfig.Instance.pacMan.appIdentifier)
+                {
+                    LocalAddress = System.Net.IPAddress.Any,
+                    Port = AppConfig.Instance.pacMan.port,
+                    MaximumConnections = AppConfig.Instance.pacMan.maxConnection,
+                    DefaultOutgoingMessageCapacity = 1024,
+                    SimulatedDuplicatesChance = AppConfig.Instance.simulatedDuplicatesChance,
+                    SimulatedLoss = AppConfig.Instance.simulatedLoss,
+                    SimulatedMinimumLatency = AppConfig.Instance.simulatedMinimumLatency,
+                    SimulatedRandomLatency = AppConfig.Instance.simulatedRandomLatency,
+                },
                 onIncommingConnection = OnIncommingConnection,
                 onConnectionStatusChanged = OnConnectionStatusChanged,
             };
+
             mUdpListener.Start(netConfig);
             mRunning = true;
             TSLog.Info("Start Running");
@@ -76,8 +86,11 @@ namespace Prototype
                 {
                     if (p.requestFullSnapshot)
                     {
-                        mPlayersToSendFull.Add(p);
-                        p.requestFullSnapshot = false;
+                        if (p.connection.Status == NetConnectionStatus.Connected)
+                        {
+                            mPlayersToSendFull.Add(p);
+                            p.requestFullSnapshot = false;
+                        }
                     }
                     else
                     {
@@ -122,9 +135,23 @@ namespace Prototype
             {
                 NetOutgoingMessage msg = mUdpListener.CreateMessage(MessageID.Snapshot, fbb);
                 // msg.Write(...); // latest player input applied on server
-                mUdpListener.SendMessage(
-                    msg, p.connection, 
-                    full ? NetDeliveryMethod.ReliableOrdered : NetDeliveryMethod.UnreliableSequenced);
+                if (full)
+                {
+                    mUdpListener.SendMessage(
+                        msg, 
+                        p.connection,
+                        NetDeliveryMethod.ReliableOrdered,
+                        (int)SequenceChannel.FullUpdate);
+                }
+                else
+                {
+                    mUdpListener.SendMessage(
+                        msg, 
+                        p.connection,
+                        NetDeliveryMethod.UnreliableSequenced,
+                        (int)SequenceChannel.DeltaUpdate);
+
+                }
             }
             OffsetArrayPool.Dealloc(ref boxArray);
             MessageBuilder.Unlock();

@@ -13,28 +13,25 @@ namespace iCarus.Network
 
     public class UdpListener
     {
-        public IPAddress localAddress { get { return mConfig.localAddress; } }
-        public int port { get { return mConfig.port; } }
-        public string appIdentifier { get { return mConfig.appIdentifier; } }
+        public IPAddress localAddress { get { return mConfig.netPeerConfig.LocalAddress; } }
+        public int port { get { return mConfig.netPeerConfig.Port; } }
+        public string appIdentifier { get { return mConfig.netPeerConfig.AppIdentifier; } }
         public MessageDispatcher dispatcher { get { return mDispatcher; } }
+        public NetServer netServer { get { return mNetServer; } }
 
         public delegate bool OnIncommingConnection(NetConnection connection, string name, out string denyReason);
         public delegate void OnConnectionStatusChanged(NetConnection connection, string reason);
 
         public class Configuration
         {
-            public IPAddress localAddress = IPAddress.Any;
-            public int port = 65534;
-            public string appIdentifier = "UnknownApp";
-            public int maxConnections = 4;
-            public int defaultOutgoingMessageCapacity = 16384;
+            public NetPeerConfiguration netPeerConfig;
             public OnIncommingConnection onIncommingConnection;
             public OnConnectionStatusChanged onConnectionStatusChanged;
         }
 
         public NetOutgoingMessage CreateMessage(MessageID id, FlatBufferBuilder fbb)
         {
-            NetOutgoingMessage msg = mServer.CreateMessage();
+            NetOutgoingMessage msg = mNetServer.CreateMessage();
             msg.Write((ushort)id);
             ushort len = (ushort)fbb.Offset;
             msg.Write(len);
@@ -48,7 +45,7 @@ namespace iCarus.Network
             NetDeliveryMethod method,
             int sequenceChannel = 0)
         {
-            return mServer.SendMessage(msg, recipient, method, sequenceChannel);
+            return mNetServer.SendMessage(msg, recipient, method, sequenceChannel);
         }
 
         public void SendMessage(
@@ -57,47 +54,39 @@ namespace iCarus.Network
             NetDeliveryMethod method,
             int sequenceChannel = 0)
         {
-            mServer.SendMessage(msg, recipients, method, sequenceChannel);
+            mNetServer.SendMessage(msg, recipients, method, sequenceChannel);
         }
 
         public void Start(Configuration config)
         {
             mConfig = config;
-
-            NetPeerConfiguration netConfig = new NetPeerConfiguration(appIdentifier)
-            {
-                LocalAddress = localAddress,
-                Port = port,
-                MaximumConnections = mConfig.maxConnections,
-                DefaultOutgoingMessageCapacity = mConfig.defaultOutgoingMessageCapacity,
-            };
-            netConfig.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
+            mConfig.netPeerConfig.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
             #if VERBOSE_DEBUG
-            netConfig.EnableMessageType(NetIncomingMessageType.VerboseDebugMessage);
+            mConfig.netPeerConfig.EnableMessageType(NetIncomingMessageType.VerboseDebugMessage);
             #endif
 
-            mServer = new NetServer(netConfig);
-            mServer.Start();
+            mNetServer = new NetServer(mConfig.netPeerConfig);
+            mNetServer.Start();
 
             NetLog.InfoFormat("{0} Network Initialized", appIdentifier);
         }
 
         public void Stop()
         {
-            if (null != mServer)
+            if (null != mNetServer)
             {
-                mServer.Shutdown("Closed");
-                mServer = null;
+                mNetServer.Shutdown("Closed");
+                mNetServer = null;
             }
         }
 
         public void Update()
         {
-            if (null == mServer)
+            if (null == mNetServer)
                 return;
 
             NetIncomingMessage message;
-            while (null != (message = mServer.ReadMessage()))
+            while (null != (message = mNetServer.ReadMessage()))
             {
                 try
                 {
@@ -141,7 +130,7 @@ namespace iCarus.Network
                 {
                     NetLog.Exception(appIdentifier, e);
                 }
-                mServer.Recycle(message);
+                mNetServer.Recycle(message);
             }
         }
 
@@ -229,7 +218,7 @@ namespace iCarus.Network
             }
         }
 
-        NetServer mServer;
+        NetServer mNetServer;
         Configuration mConfig;
         MessageDispatcher mDispatcher = new MessageDispatcher();
     }

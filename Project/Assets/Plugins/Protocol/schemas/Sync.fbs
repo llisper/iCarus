@@ -64,3 +64,8 @@ table Snapshot
     tick_object:[TickObjectBox];
 }
 
+table AckFullUpdate
+{
+    tick:uint;
+}
+

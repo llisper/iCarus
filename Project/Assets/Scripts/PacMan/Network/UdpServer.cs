@@ -14,9 +14,13 @@ namespace PacMan
         {
             UdpListener.Configuration netConfig = new UdpListener.Configuration()
             {
-                appIdentifier = AppConfig.Instance.pacMan.appIdentifier,
-                port = AppConfig.Instance.pacMan.port,
-                maxConnections = AppConfig.Instance.pacMan.maxConnection,
+                netPeerConfig = new NetPeerConfiguration(AppConfig.Instance.pacMan.appIdentifier)
+                {
+                    LocalAddress = System.Net.IPAddress.Any,
+                    Port = AppConfig.Instance.pacMan.port,
+                    MaximumConnections = AppConfig.Instance.pacMan.maxConnection,
+                    DefaultOutgoingMessageCapacity = 1024,
+                },
                 onIncommingConnection = OnIncommingConnection,
                 onConnectionStatusChanged = OnConnectionStatusChanged,
             };

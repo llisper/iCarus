@@ -1,5 +1,10 @@
 ﻿{
     "logPort": 11011,
+    "simulatedDuplicatesChance": 0.0,
+    "simulatedLoss": 0.0,
+    "simulatedMinimumLatency": 0.05,
+    "simulatedRandomLatency": 0.2,
+
     "pacMan": {
         "appIdentifier": "Test",
         "host": "localhost",
@@ -17,6 +22,6 @@
     "client": {
         "tickrate": 0.015,
         "cmdrate": 0.03,
-        "lerpdelay": 0.09
+        "lerpdelay": 0.25
     }
 }

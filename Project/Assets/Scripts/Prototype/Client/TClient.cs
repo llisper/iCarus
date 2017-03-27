@@ -20,6 +20,7 @@ namespace Prototype
         public float serverUpdaterate { get; private set; }
         public float tickrate { get; private set; }
         public float cmdrate { get; private set; }
+        public NetClient netClient { get { return mConnector.netClient; } }
 
         public void StartClient()
         {
@@ -42,7 +43,14 @@ namespace Prototype
             {
                 host = AppConfig.Instance.pacMan.host,
                 port = AppConfig.Instance.pacMan.port,
-                appIdentifier = AppConfig.Instance.pacMan.appIdentifier,
+                netPeerConfig = new NetPeerConfiguration(AppConfig.Instance.pacMan.appIdentifier)
+                {
+                    DefaultOutgoingMessageCapacity = 1024,
+                    SimulatedDuplicatesChance = AppConfig.Instance.simulatedDuplicatesChance,
+                    SimulatedLoss = AppConfig.Instance.simulatedLoss,
+                    SimulatedMinimumLatency = AppConfig.Instance.simulatedMinimumLatency,
+                    SimulatedRandomLatency = AppConfig.Instance.simulatedRandomLatency,
+                },
                 onNetStatusChanged = OnNetStatusChanged,
             };
             mConnector.Start(netConfig);
@@ -83,10 +91,9 @@ namespace Prototype
             }
             else
             {
-                mSyncManager.AddDelta(byteBuffer);
+                mSyncManager.AddDelta(ss.TickNow, byteBuffer);
                 return MessageHandleResult.Processing;
             }
-            // TCLog.InfoFormat("snapshot delta -> {0} bytes, [{1},{2}) ticks", byteBuffer.Length, ss.TickStart, ss.TickStart + ss.TickNum);
         }
 
         uint mCmdOverTick;

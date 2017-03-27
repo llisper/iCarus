@@ -10,9 +10,10 @@ namespace iCarus.Network
     {
         public string host { get { return mConfig.host; } }
         public int port { get { return mConfig.port; } }
-        public string appIdentifier { get { return mConfig.appIdentifier; } }
+        public string appIdentifier { get { return mConfig.netPeerConfig.AppIdentifier; } }
         public MessageDispatcher dispatcher { get { return mDispatcher; } }
-        public NetConnectionStatus connectionStatus { get { return null != mClient ? mClient.ConnectionStatus : NetConnectionStatus.Disconnected; } }
+        public NetConnectionStatus connectionStatus { get { return null != mNetClient ? mNetClient.ConnectionStatus : NetConnectionStatus.Disconnected; } }
+        public NetClient netClient { get { return mNetClient; } }
 
         public delegate void OnNetStatusChanged(UdpConnector client, NetConnectionStatus status, string reason);
 
@@ -20,51 +21,44 @@ namespace iCarus.Network
         {
             public string host = "localhost";
             public int port = 65534;
-            public string appIdentifier = "UnknownApp";
-            public int defaultOutgoingMessageCapacity = 16384;
+            public NetPeerConfiguration netPeerConfig;
             public OnNetStatusChanged onNetStatusChanged;
         }
 
         public void Start(Configuration config)
         {
             mConfig = config;
-
-            NetPeerConfiguration netConfig = new NetPeerConfiguration(appIdentifier)
-            {
-                DefaultOutgoingMessageCapacity = mConfig.defaultOutgoingMessageCapacity,
-            };
-
             #if VERBOSE_DEBUG
-            netConfig.EnableMessageType(NetIncomingMessageType.VerboseDebugMessage);
+            mConfig.netPeerConfig.EnableMessageType(NetIncomingMessageType.VerboseDebugMessage);
             #endif
 
-            mClient = new NetClient(netConfig);
-            mClient.Start();
+            mNetClient = new NetClient(mConfig.netPeerConfig);
+            mNetClient.Start();
         }
 
         public void Connect(string name)
         {
             if (connectionStatus == NetConnectionStatus.Disconnected)
             {
-                NetOutgoingMessage approval = mClient.CreateMessage();
+                NetOutgoingMessage approval = mNetClient.CreateMessage();
                 approval.Write(name);
-                mClient.Connect(host, port, approval);
+                mNetClient.Connect(host, port, approval);
             }
         }
 
         public void Stop()
         {
-            if (null != mClient)
-                mClient.Shutdown("Disconnected");
+            if (null != mNetClient)
+                mNetClient.Shutdown("Disconnected");
         }
 
         public void Update()
         {
-            if (null == mClient)
+            if (null == mNetClient)
                 return;
 
             NetIncomingMessage message;
-            while (null != (message = mClient.ReadMessage()))
+            while (null != (message = mNetClient.ReadMessage()))
             {
                 try
                 {
@@ -102,23 +96,23 @@ namespace iCarus.Network
                 {
                     NetLog.Exception(e);
                 }
-                mClient.Recycle(message);
+                mNetClient.Recycle(message);
             }
         }
 
 		public NetSendResult SendMessage(MessageID id, FlatBufferBuilder fbb, NetDeliveryMethod method, int sequenceChannel = 0)
         {
-            if (null == mClient)
+            if (null == mNetClient)
                 Exception.Throw<NetworkException>("UdpClient.SendMessage is called before UdpClient.Start");
             if (fbb.Offset > ushort.MaxValue)
                 throw new OverflowException(string.Format("fbb.Offset({0}) > ushort.MaxValue", fbb.Offset));
 
-            NetOutgoingMessage msg = mClient.CreateMessage();
+            NetOutgoingMessage msg = mNetClient.CreateMessage();
             msg.Write((ushort)id);
             ushort len = (ushort)fbb.Offset;
             msg.Write(len);
             msg.Write(fbb.DataBuffer.Data, fbb.DataBuffer.Position, fbb.Offset);
-            return mClient.SendMessage(msg, method, sequenceChannel);
+            return mNetClient.SendMessage(msg, method, sequenceChannel);
         }
 
         #region internal
@@ -183,7 +177,7 @@ namespace iCarus.Network
             }
         }
 
-        NetClient mClient;
+        NetClient mNetClient;
         Configuration mConfig;
         MessageDispatcher mDispatcher = new MessageDispatcher();
         #endregion internal

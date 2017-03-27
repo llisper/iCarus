@@ -24,7 +24,10 @@ namespace PacMan
             {
                 host = AppConfig.Instance.pacMan.host,
                 port = AppConfig.Instance.pacMan.port,
-                appIdentifier = AppConfig.Instance.pacMan.appIdentifier,
+                netPeerConfig = new NetPeerConfiguration(AppConfig.Instance.pacMan.appIdentifier)
+                {
+                    DefaultOutgoingMessageCapacity = 1024,
+                },
                 onNetStatusChanged = OnNetStatusChanged,
             };
             mConnector.Start(netConfig);
