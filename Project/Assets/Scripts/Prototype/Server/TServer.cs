@@ -12,13 +12,6 @@ using Lidgren.Network;
 
 namespace Prototype
 {
-    public class TPlayer
-    {
-        public NetConnection connection;
-        public bool requestFullSnapshot = true;
-        public TPlayer(NetConnection conn) { connection = conn; }
-    }
-
     public class TSLog : Logging.Define<TSLog> { }
     public sealed class TServer : SingletonBehaviour<TServer>
     {
@@ -61,6 +54,7 @@ namespace Prototype
             };
 
             mUdpListener.Start(netConfig);
+            mUdpListener.dispatcher.Subscribe(MessageID.InputDataArray, InputDataArrayHandler);
             mRunning = true;
             TSLog.Info("Start Running");
         }
@@ -161,7 +155,10 @@ namespace Prototype
         {
             denyReason = null;
             TSLog.InfoFormat("Incomming connection {0} - {1}", connection.RemoteEndPoint, name);
-            mPlayers.Add(new TPlayer(connection));
+            TPlayer newPlayer = new TPlayer(name, connection);
+            newPlayer.Init();
+            mPlayers.Add(newPlayer);
+            mTickObjects.Add(newPlayer);
             return true;
         }
 
@@ -171,9 +168,25 @@ namespace Prototype
             {
                 int index = mPlayers.FindIndex(p => p.connection == connection);
                 if (-1 != index)
+                {
+                    mTickObjects.Remove(mPlayers[index]);
+                    mPlayers[index].Destroy();
                     mPlayers.RemoveAt(index);
+                }
             }
             TSLog.InfoFormat("Connection status changed {0} {1} {2}", connection.RemoteEndPoint, connection.Status, reason);
+        }
+
+        MessageHandleResult InputDataArrayHandler(NetConnection connection, ByteBuffer byteBuffer, NetIncomingMessage message)
+        {
+            int index = mPlayers.FindIndex(p => p.connection == connection);
+            if (-1 != index)
+            {
+                InputDataArray ida = InstancePool.Get<InputDataArray>();
+                InputDataArray.GetRootAsInputDataArray(byteBuffer, ida);
+                mPlayers[index].UpdateInput(ida);
+            }
+            return MessageHandleResult.Finished;
         }
 
         uint mTickCount = 0;

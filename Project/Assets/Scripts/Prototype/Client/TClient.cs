@@ -31,6 +31,7 @@ namespace Prototype
             mCmdOverTick = (uint)Mathf.FloorToInt(cmdrate / tickrate);
 
             mSyncManager.Init();
+            mInput.Init();
 
             var prefab = Resources.Load("Prototype/Cube");
             GameObject go = (GameObject)Instantiate(prefab, transform);
@@ -70,9 +71,20 @@ namespace Prototype
             mConnector.Update();
         }
 
+        void FixedUpdate()
+        {
+            if (mConnector.connectionStatus == NetConnectionStatus.Connected)
+                mInput.UpdateInput(mConnector);
+        }
+
         void OnDestroy()
         {
             mConnector.Stop();
+        }
+
+        void OnDrawGizmosSelected()
+        {
+            mInput.DrawGizmosSelected();
         }
 
         void OnNetStatusChanged(UdpConnector connector, NetConnectionStatus status, string reason)
@@ -98,6 +110,7 @@ namespace Prototype
 
         uint mCmdOverTick;
         UdpConnector mConnector = new UdpConnector();
+        TInput mInput = new TInput();
         SyncManager mSyncManager;
     }
 }

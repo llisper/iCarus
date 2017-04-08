@@ -2,8 +2,8 @@
     "logPort": 11011,
     "simulatedDuplicatesChance": 0.0,
     "simulatedLoss": 0.0,
-    "simulatedMinimumLatency": 0.05,
-    "simulatedRandomLatency": 0.2,
+    "simulatedMinimumLatency": 0.0,
+    "simulatedRandomLatency": 0.0,
 
     "pacMan": {
         "appIdentifier": "Test",

@@ -11,7 +11,7 @@ struct Vec3
 union TickObject
 {
     MovingSphere,
-    TickObject2
+    Player,
 }
 
 // MovingSphere
@@ -33,23 +33,26 @@ table MovingSphereFull
     rot:Vec3;
 }
 
-// TickObject2
-table TickObject2Full
+// Player
+table Player
 {
-    count:int;
+    full:PlayerFull;
+    delta:PlayerDelta;
 }
 
-table TickObject2Delta
+table PlayerDelta
 {
-    count:int;
+    pos:Vec3;
+    rot:Vec3;
 }
 
-table TickObject2
+table PlayerFull
 {
-    full:TickObject2Full;
-    delta:TickObject2Delta;
+    pos:Vec3;
+    rot:Vec3;
 }
 
+// Messages
 table TickObjectBox
 {
     id:int;
@@ -62,10 +65,18 @@ table Snapshot
     tick_num:uint;
     full:bool;
     tick_object:[TickObjectBox];
+    // TODO: input ack list
 }
 
-table AckFullUpdate
+table InputData
 {
-    tick:uint;
+    index:uint;
+    keyboard:ubyte;
+    mouse_has_hit:bool;
+    mouse_hit:Vec3;
 }
 
+table InputDataArray
+{
+    input_data:[InputData];
+}

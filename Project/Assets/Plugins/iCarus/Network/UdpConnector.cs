@@ -100,18 +100,18 @@ namespace iCarus.Network
             }
         }
 
-		public NetSendResult SendMessage(MessageID id, FlatBufferBuilder fbb, NetDeliveryMethod method, int sequenceChannel = 0)
+        public NetOutgoingMessage CreateMessage(MessageID id, FlatBufferBuilder fbb)
         {
-            if (null == mNetClient)
-                Exception.Throw<NetworkException>("UdpClient.SendMessage is called before UdpClient.Start");
-            if (fbb.Offset > ushort.MaxValue)
-                throw new OverflowException(string.Format("fbb.Offset({0}) > ushort.MaxValue", fbb.Offset));
-
             NetOutgoingMessage msg = mNetClient.CreateMessage();
             msg.Write((ushort)id);
             ushort len = (ushort)fbb.Offset;
             msg.Write(len);
             msg.Write(fbb.DataBuffer.Data, fbb.DataBuffer.Position, fbb.Offset);
+            return msg;
+        }
+
+		public NetSendResult SendMessage(NetOutgoingMessage msg, NetDeliveryMethod method, int sequenceChannel = 0)
+        {
             return mNetClient.SendMessage(msg, method, sequenceChannel);
         }
 

@@ -3,7 +3,7 @@ namespace Protocol;
 enum MessageID : ushort
 {
     Snapshot,
-    AckFullUpdate,
+    InputDataArray,
     Count,
 }
 
