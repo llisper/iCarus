@@ -24,7 +24,7 @@ namespace Prototype
 
         public void StartServer()
         {
-            tickrate = AppConfig.Instance.server.tickrate;
+            tickrate = AppConfig.Instance.tickrate;
             updaterate = AppConfig.Instance.server.updaterate;
             mSnapshotOverTick = (uint)Mathf.FloorToInt(updaterate / tickrate);
             TSLog.InfoFormat("tickrate:{0}, updaterate:{1}, ss/t:{2}", tickrate, updaterate, mSnapshotOverTick);
@@ -112,12 +112,39 @@ namespace Prototype
             var boxArray = OffsetArrayPool.Alloc<TickObjectBox>(mTickObjects.Count);
             foreach (ITickObject to in mTickObjects)
             {
+                int dataOffset = to.Snapshot(fbb, full);
+                VectorOffset eventVectorOffset = default(VectorOffset);
+                if (!full && to.eventType != TickEvent.NONE)
+                {
+                    var eventVector = OffsetArrayPool.Alloc<TickEventT>((int)mSnapshotOverTick);
+                    for (uint i = 0; i < mSnapshotOverTick; ++i)
+                    {
+                        int eventOffset = to.SnapshotEvent(fbb, mTickCount - mSnapshotOverTick + i);
+                        if (eventOffset >= 0)
+                        {
+                            eventVector.offsets[eventVector.position++] = TickEventT.CreateTickEventT(
+                                fbb,
+                                mTickCount - mSnapshotOverTick + i,
+                                to.eventType,
+                                eventOffset);
+                        }
+                    }
+
+                    TickObjectBox.StartEventsVector(fbb, eventVector.position);
+                    eventVectorOffset = Helpers.SetVector(fbb, eventVector);
+                    OffsetArrayPool.Dealloc(ref eventVector);
+                }
                 boxArray.offsets[boxArray.position++] = TickObjectBox.CreateTickObjectBox(
-                    fbb, to.id, to.type, to.Snapshot(fbb, full));
+                    fbb, 
+                    to.id,
+                    to.type,
+                    dataOffset,
+                    eventVectorOffset);
             }
 
             Snapshot.StartTickObjectVector(fbb, boxArray.position);
             var vecOffset = Helpers.SetVector(fbb, boxArray);
+            OffsetArrayPool.Dealloc(ref boxArray);
             fbb.Finish(Snapshot.CreateSnapshot(
                 fbb,
                 mTickCount,
@@ -128,26 +155,14 @@ namespace Prototype
             foreach (var p in players)
             {
                 NetOutgoingMessage msg = mUdpListener.CreateMessage(MessageID.Snapshot, fbb);
-                // msg.Write(...); // latest player input applied on server
-                if (full)
-                {
-                    mUdpListener.SendMessage(
-                        msg, 
-                        p.connection,
-                        NetDeliveryMethod.ReliableOrdered,
-                        (int)SequenceChannel.FullUpdate);
-                }
-                else
-                {
-                    mUdpListener.SendMessage(
-                        msg, 
-                        p.connection,
-                        NetDeliveryMethod.UnreliableSequenced,
-                        (int)SequenceChannel.DeltaUpdate);
-
-                }
+                if (!full)
+                    p.AddAckInputs(msg);
+                mUdpListener.SendMessage(
+                    msg, 
+                    p.connection,
+                    NetDeliveryMethod.ReliableOrdered,
+                    (int)SequenceChannel.Snapshot);
             }
-            OffsetArrayPool.Dealloc(ref boxArray);
             MessageBuilder.Unlock();
         }
 

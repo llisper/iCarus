@@ -9,6 +9,11 @@ namespace Prototype
     {
         public int id { get { return TClient.Instance.playerName.GetHashCode(); } }
 
+        public void EventUpdate(TickEventT evt)
+        {
+            throw new NotImplementedException();
+        }
+
         public void FullUpdate(uint tick, TickObjectBox box)
         {
             throw new NotImplementedException();

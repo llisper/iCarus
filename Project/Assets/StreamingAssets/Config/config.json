@@ -15,13 +15,12 @@
         "beanSpawnRadius": 20.0,
         "maxConnection": 2
     },
+    "tickrate": 0.03,
     "server": {
-        "tickrate": 0.015,
-        "updaterate": 0.045
+        "updaterate": 0.06
     },
     "client": {
-        "tickrate": 0.015,
-        "cmdrate": 0.03,
-        "lerpdelay": 0.25
+        "cmdrate": 0.06,
+        "lerpdelay": 0.12
     }
 }

@@ -18,23 +18,24 @@ namespace Prototype
             public Vector3 mouseHit;    // X-Z position on Ground hit by mouse
         }
 
+        public int notAckInputs { get { return mInputQueue.Count; } }
+
         public void Init()
         {
             float cmdrate = AppConfig.Instance.client.cmdrate;
-            float tickrate = AppConfig.Instance.client.tickrate;
+            float tickrate = AppConfig.Instance.tickrate;
             mCmdOverTick = (uint)Mathf.Max(1, Mathf.CeilToInt(cmdrate / tickrate));
-            mData = new InputData[mCmdOverTick];
-            mIndex = 0;
+            mIndex = 1;
         }
 
         public bool Current(out InputData inputData)
         {
-            if (null == mData || mIndex == 0)
+            if (mInputQueue.Count <= 0)
             {
-                inputData = new InputData();
+                inputData = default(InputData);
                 return false;
             }
-            inputData = mData[(mIndex - 1) % mCmdOverTick];
+            inputData = mInputQueue[mInputQueue.Count - 1];
             return true;
         }
 
@@ -47,16 +48,15 @@ namespace Prototype
             RaycastHit hit;
             if (inputData.mouseHasHit = Physics.Raycast(ray, out hit, 100f, (1 << Layers.Ground)))
                 inputData.mouseHit = hit.point;
-            mData[mIndex % mData.Length] = inputData;
-            mHistory.Enqueue(inputData);
+            mInputQueue.Add(inputData);
 
-            if (++mIndex % mData.Length == 0)
+            if ((mIndex++) % mCmdOverTick == 0)
             {
                 var fbb = MessageBuilder.Lock();
-                var array = OffsetArrayPool.Alloc<Protocol.InputData>(mData.Length);
-                for (int i = 0; i < mData.Length; ++i)
+                var array = OffsetArrayPool.Alloc<Protocol.InputData>((int)mCmdOverTick);
+                for (int i = 0; i < mCmdOverTick; ++i)
                 {
-                    InputData d = mData[i];
+                    InputData d = mInputQueue[mInputQueue.Count - (int)mCmdOverTick + i];
                     Protocol.InputData.StartInputData(fbb);
                     Protocol.InputData.AddIndex(fbb, d.index);
                     Protocol.InputData.AddKeyboard(fbb, d.keyboard);
@@ -82,9 +82,14 @@ namespace Prototype
             }
         }
 
-        public void AckInput()
+        public void AckInput(uint ackIndex)
         {
-
+            if (ackIndex > 0)
+            {
+                int i = 0;
+                for (; i < mInputQueue.Count && mInputQueue[i].index <= ackIndex; ++i) ;
+                mInputQueue.RemoveRange(0, i);
+            }
         }
 
         public void DrawGizmosSelected()
@@ -104,7 +109,6 @@ namespace Prototype
 
         uint mIndex;
         uint mCmdOverTick;
-        InputData[] mData;
-        Queue<InputData> mHistory = new Queue<InputData>();
+        List<InputData> mInputQueue = new List<InputData>();
     }
 }

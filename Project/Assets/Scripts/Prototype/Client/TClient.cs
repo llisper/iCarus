@@ -16,19 +16,19 @@ namespace Prototype
     {
         public string playerName = "anonymous";
 
-        public float serverTickrate { get; private set; }
         public float serverUpdaterate { get; private set; }
         public float tickrate { get; private set; }
         public float cmdrate { get; private set; }
+        public uint snapshotOverTick { get; private set; }
         public NetClient netClient { get { return mConnector.netClient; } }
+        public TInput input { get { return mInput; } }
 
         public void StartClient()
         {
-            serverTickrate = AppConfig.Instance.server.tickrate;
             serverUpdaterate = AppConfig.Instance.server.updaterate;
-            tickrate = AppConfig.Instance.client.tickrate;
+            tickrate = AppConfig.Instance.tickrate;
             cmdrate = AppConfig.Instance.client.cmdrate;
-            mCmdOverTick = (uint)Mathf.FloorToInt(cmdrate / tickrate);
+            snapshotOverTick = (uint)Mathf.FloorToInt(serverUpdaterate / tickrate);
 
             mSyncManager.Init();
             mInput.Init();
@@ -75,6 +75,7 @@ namespace Prototype
         {
             if (mConnector.connectionStatus == NetConnectionStatus.Connected)
                 mInput.UpdateInput(mConnector);
+            mSyncManager.SimulateFixedUpdate();
         }
 
         void OnDestroy()
@@ -103,12 +104,11 @@ namespace Prototype
             }
             else
             {
-                mSyncManager.AddDelta(ss.TickNow, byteBuffer);
+                mSyncManager.AddDelta(ss.TickNow, byteBuffer, message);
                 return MessageHandleResult.Processing;
             }
         }
 
-        uint mCmdOverTick;
         UdpConnector mConnector = new UdpConnector();
         TInput mInput = new TInput();
         SyncManager mSyncManager;

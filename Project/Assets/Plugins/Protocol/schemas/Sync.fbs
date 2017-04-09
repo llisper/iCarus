@@ -14,49 +14,42 @@ union TickObject
     Player,
 }
 
+union TickEvent
+{
+    MovingSphereEvent,
+}
+
 // MovingSphere
 table MovingSphere
 {
-    full:MovingSphereFull;
-    delta:MovingSphereDelta;
+    pos:Vec3; // full|delta
+    rot:Vec3; // full|delta
 }
 
-table MovingSphereDelta
+table MovingSphereEvent
 {
-    pos:Vec3;
-    rot:Vec3;
-}
-
-table MovingSphereFull
-{
-    pos:Vec3;
-    rot:Vec3;
+    color:int;
 }
 
 // Player
 table Player
 {
-    full:PlayerFull;
-    delta:PlayerDelta;
-}
-
-table PlayerDelta
-{
-    pos:Vec3;
-    rot:Vec3;
-}
-
-table PlayerFull
-{
-    pos:Vec3;
-    rot:Vec3;
+    pos:Vec3; // full|delta
+    rot:Vec3; // full|delta
 }
 
 // Messages
+table TickEventT
+{
+    tick:uint;
+    ev:TickEvent;
+}
+
 table TickObjectBox
 {
     id:int;
-    tick_object:TickObject;
+    data:TickObject;
+    events:[TickEventT];
 }
 
 table Snapshot
@@ -65,7 +58,6 @@ table Snapshot
     tick_num:uint;
     full:bool;
     tick_object:[TickObjectBox];
-    // TODO: input ack list
 }
 
 table InputData
