@@ -67,11 +67,6 @@ namespace Prototype
             mConnector.dispatcher.Subscribe(MessageID.Snapshot, SnapshotHandler);
         }
 
-        void Awake()
-        {
-            mSyncManager = gameObject.AddComponent<SyncManager>();
-        }
-
         void Update()
         {
             mConnector.Update();
@@ -117,6 +112,6 @@ namespace Prototype
 
         UdpConnector mConnector = new UdpConnector();
         TInput mInput = new TInput();
-        SyncManager mSyncManager;
+        SyncManager mSyncManager = new SyncManager();
     }
 }

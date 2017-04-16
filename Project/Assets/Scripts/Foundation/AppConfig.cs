@@ -37,6 +37,7 @@ namespace Foundation
         public float updaterate = 0.045f; // 45 ms/snapshot, do snapshot every 3 ticks
         public float cmdrate = 0.03f;    // 33.3 p/s send input every 2 ticks
         public uint cachesnapshots = 2;  // cache number of snapshots before simulate
+        public int defaultOutgoingMessageCapacity = 4096;
         #endregion configuration
 
         string mConfigFileName;

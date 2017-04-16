@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 
-using System;
 using System.Collections.Generic;
 
 using Protocol;
@@ -10,7 +9,7 @@ using Lidgren.Network;
 
 namespace Prototype
 {
-    public class SyncManager : MonoBehaviour
+    public class SyncManager
     {
         public bool hasFullUpdated { get { return mHasFullUpdated; } }
         public uint serverTick { get { return mServerTick; } }

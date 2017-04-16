@@ -16,6 +16,7 @@ namespace iCarus.Network
         public NetClient netClient { get { return mNetClient; } }
 
         public delegate void OnNetStatusChanged(UdpConnector client, NetConnectionStatus status, string reason);
+        public OnNetStatusChanged onNetStatusChanged;
 
         public class Configuration
         {
@@ -28,14 +29,17 @@ namespace iCarus.Network
         public void Start(Configuration config)
         {
             mConfig = config;
+            onNetStatusChanged = config.onNetStatusChanged;
             #if VERBOSE_DEBUG
             mConfig.netPeerConfig.EnableMessageType(NetIncomingMessageType.VerboseDebugMessage);
             #endif
 
             mNetClient = new NetClient(mConfig.netPeerConfig);
             mNetClient.Start();
+            mNetClient.Connect(host, port);
         }
 
+        [Obsolete]
         public void Connect(string name)
         {
             if (connectionStatus == NetConnectionStatus.Disconnected)
@@ -148,8 +152,8 @@ namespace iCarus.Network
             // <?> 接收到这个消息的时候, mClient.connectionStatus是否和status一致
             NetConnectionStatus status = (NetConnectionStatus)message.ReadByte();
             string reason = message.ReadString();
-            if (null != mConfig.onNetStatusChanged)
-                mConfig.onNetStatusChanged(this, status, reason);
+            if (null != onNetStatusChanged)
+                onNetStatusChanged(this, status, reason);
 
             NetLog.DebugFormat(
                 "connection({0}) status changed: {1}:{2}", 
