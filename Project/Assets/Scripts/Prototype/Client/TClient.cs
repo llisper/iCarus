@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 
 using iCarus.Log;
 using iCarus.Network;
@@ -25,11 +26,12 @@ namespace Prototype
 
         public void StartClient()
         {
-            serverUpdaterate = AppConfig.Instance.server.updaterate;
+            serverUpdaterate = AppConfig.Instance.updaterate;
             tickrate = AppConfig.Instance.tickrate;
-            cmdrate = AppConfig.Instance.client.cmdrate;
+            cmdrate = AppConfig.Instance.cmdrate;
             snapshotOverTick = (uint)Mathf.FloorToInt(serverUpdaterate / tickrate);
 
+            Time.fixedDeltaTime = tickrate;
             mSyncManager.Init();
             mInput.Init();
 
@@ -40,13 +42,17 @@ namespace Prototype
             MovingSphereClient msc = go.AddComponent<MovingSphereClient>();
             mSyncManager.AddTickObject(msc);
 
+            TPlayerClient player = new TPlayerClient();
+            player.Init();
+            mSyncManager.AddTickObject(player);
+
             UdpConnector.Configuration netConfig = new UdpConnector.Configuration()
             {
                 host = AppConfig.Instance.pacMan.host,
                 port = AppConfig.Instance.pacMan.port,
                 netPeerConfig = new NetPeerConfiguration(AppConfig.Instance.pacMan.appIdentifier)
                 {
-                    DefaultOutgoingMessageCapacity = 1024,
+                    DefaultOutgoingMessageCapacity = 10240,
                     SimulatedDuplicatesChance = AppConfig.Instance.simulatedDuplicatesChance,
                     SimulatedLoss = AppConfig.Instance.simulatedLoss,
                     SimulatedMinimumLatency = AppConfig.Instance.simulatedMinimumLatency,

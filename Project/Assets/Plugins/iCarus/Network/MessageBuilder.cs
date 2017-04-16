@@ -16,6 +16,8 @@ namespace iCarus.Network
         {
             if (sLocked)
                 Exception.Throw<NetworkException>("FlatBufferBuilder has already been locked, recursive lock is not allowed");
+            sLocked = true;
+            sBuilder.Clear();
             return sBuilder;
         }
 

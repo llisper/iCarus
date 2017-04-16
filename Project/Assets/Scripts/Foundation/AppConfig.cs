@@ -33,24 +33,10 @@ namespace Foundation
         }
         public PacMan pacMan = new PacMan();
 
-        [Serializable]
-        public class Server
-        {
-            public float updaterate = 0.045f; // 45 ms/snapshot, do snapshot every 3 ticks
-        }
-
-        [Serializable]
-        public class Client
-        {
-            public float cmdrate = 0.03f;    // 33.3 p/s send input every 2 ticks
-            public float cmdhistroy = 0.5f;  // save 0.5s of input data, waiting for server ack, if this limit is reached, input sampling will stop
-            public float lerpdelay = 0.09f;  // start lerping after 0.09s of snapshot has been received, roughly 2 pcts if serser.updaterate == 0.045f
-        }
-
         public float tickrate = 0.015f;   // 66.6 t/s
-        public Server server = new Server();
-        public Client client = new Client();
-
+        public float updaterate = 0.045f; // 45 ms/snapshot, do snapshot every 3 ticks
+        public float cmdrate = 0.03f;    // 33.3 p/s send input every 2 ticks
+        public uint cachesnapshots = 2;  // cache number of snapshots before simulate
         #endregion configuration
 
         string mConfigFileName;

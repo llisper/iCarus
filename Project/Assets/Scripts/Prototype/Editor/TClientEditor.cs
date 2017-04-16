@@ -10,7 +10,7 @@ namespace Prototype
         public override void OnInspectorGUI()
         {
             TClient script = (TClient)target;
-            EditorGUILayout.LabelField("notAckInputs: " + script.input.notAckInputs);
+            EditorGUILayout.LabelField("notAckInputs: " + script.input.inputQueue.Count);
             if (null != script.netClient)
             {
                 EditorGUILayout.TextArea(script.netClient.Statistics.ToString(), EditorStyles.label);

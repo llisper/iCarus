@@ -41,6 +41,7 @@ namespace Prototype
         public int id { get; private set; }
         public TickObject type { get { return TickObject.Player; } }
         public TickEvent eventType { get { return TickEvent.NONE; } }
+        public int choke { get { return Mathf.Max(0, mInputQueue.Count - TServer.Instance.inputchoke); } }
 
         public void SimulateFixedUpdate()
         {
@@ -107,6 +108,7 @@ namespace Prototype
 
         public void AddAckInputs(NetOutgoingMessage msg)
         {
+            msg.Write(choke);
             for (uint i = 0; i < TServer.Instance.snapshotOverTick; ++i)
             {
                 uint tickCount = TServer.Instance.tickCount - TServer.Instance.snapshotOverTick + i;

@@ -1,14 +1,16 @@
 ﻿using UnityEngine;
 using FlatBuffers;
 using Protocol;
+using System;
 
 namespace Prototype
 {
     public class MovingSphereClient : MonoBehaviour, ITickObjectClient
     {
         public int id { get { return 0; } }
+        public bool predict { get { return false; } }
 
-        public void FullUpdate(uint tick, TickObjectBox box)
+        public void FullUpdate(TickObjectBox box)
         {
             Protocol.MovingSphere data = InstancePool.Get<Protocol.MovingSphere>();
             box.GetData(data);
@@ -35,14 +37,8 @@ namespace Prototype
             GetComponent<Renderer>().material.color = color;
         }
 
-        public void Lerping(float t, uint tick, TickObjectBox box)
+        public void Lerping(float t, TickObjectBox box)
         {
-            if (Mathf.Approximately(t, 1f))
-            {
-                mPosition = transform.position;
-                mRotation = transform.rotation;
-            }
-                
             Protocol.MovingSphere data = InstancePool.Get<Protocol.MovingSphere>();
             box.GetData(data);
             Vec3 vec3 = InstancePool.Get<Vec3>();
@@ -53,7 +49,16 @@ namespace Prototype
 
             transform.position = Vector3.Lerp(mPosition, targetPosition, t);
             transform.rotation = Quaternion.Lerp(mRotation, targetRotation, t);
+
+            if (Mathf.Approximately(t, 1f))
+            {
+                mPosition = transform.position;
+                mRotation = transform.rotation;
+            }
         }
+
+        public void ApplyDelta(TickObjectBox box) { throw new NotImplementedException(); }
+        public void Predict() { throw new NotImplementedException(); }
 
         Vector3 mPosition;
         Quaternion mRotation;

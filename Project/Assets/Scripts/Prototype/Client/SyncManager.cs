@@ -16,10 +16,7 @@ namespace Prototype
         public uint serverTick { get { return mServerTick; } }
         public uint simulateTicks { get { return mSimulateTicks; } }
         public int snapshotCount { get { return mCachedSnapshots.Count; } }
-        [NonSerialized]
-        public float timeScale = 1f;
-        [NonSerialized]
-        public uint cacheBeforeLerping;
+        public uint cacheSnapshots { get { return AppConfig.Instance.cachesnapshots; } }
 
         bool mInitialized = false;
         bool mHasFullUpdated = false;
@@ -28,11 +25,9 @@ namespace Prototype
         Dictionary<int, ITickObjectClient> mTickObjects = new Dictionary<int, ITickObjectClient>();
         ByteBuffer mProcessing = null;
         Queue<ByteBuffer> mCachedSnapshots = new Queue<ByteBuffer>();
-        Queue<uint> mAckInputs = new Queue<uint>();
 
         public void Init()
         {
-            cacheBeforeLerping = (uint)Mathf.CeilToInt(AppConfig.Instance.client.lerpdelay / AppConfig.Instance.server.updaterate);
             mInitialized = true;
         }
 
@@ -44,7 +39,7 @@ namespace Prototype
                 snapshot.GetTickObject(tob, i);
                 ITickObjectClient tickObject;
                 if (mTickObjects.TryGetValue(tob.Id, out tickObject))
-                    tickObject.FullUpdate(snapshot.TickNow, tob);
+                    tickObject.FullUpdate(tob);
             }
             mServerTick = snapshot.TickNow;
             mSimulateTicks = 0;
@@ -65,8 +60,11 @@ namespace Prototype
             else
             {
                 mCachedSnapshots.Enqueue(byteBuffer);
+                int choke = msg.ReadInt32();
+                TClient.Instance.input.UpdateChoke(choke);
                 for (int i = 0; i < TClient.Instance.snapshotOverTick; ++i)
-                    mAckInputs.Enqueue(msg.ReadUInt32());
+                    TClient.Instance.input.AckInput(msg.ReadUInt32());
+                ApplyDeltaToObjectThatPredicts(byteBuffer);
             }
         }
 
@@ -77,23 +75,28 @@ namespace Prototype
 
         public void SimulateFixedUpdate()
         {
-            if (!mInitialized || 
-                (null == mProcessing && mCachedSnapshots.Count < cacheBeforeLerping))
-            {
+            if (!mInitialized)
                 return;
-            }
+
+            Simulate();
+            Predict();
+        }
+
+        void Simulate()
+        {
+            if (null == mProcessing && mCachedSnapshots.Count < cacheSnapshots)
+                return;
 
             if (null == mProcessing)
                 mProcessing = mCachedSnapshots.Dequeue();
 
-            timeScale = 1f;
             int simulateCount = 1;
             uint sot = TClient.Instance.snapshotOverTick;
-            if (mCachedSnapshots.Count > cacheBeforeLerping - 1)
+            if (mCachedSnapshots.Count > cacheSnapshots - 1)
             {
                 uint k = (uint)mCachedSnapshots.Count;
                 uint ticksToSimulate = (k + 1) * sot - mSimulateTicks;
-                uint ticksSupposeToSimulate = cacheBeforeLerping * sot - mSimulateTicks;
+                uint ticksSupposeToSimulate = cacheSnapshots * sot - mSimulateTicks;
                 simulateCount = Mathf.Max(1, Mathf.FloorToInt((float)ticksToSimulate / ticksSupposeToSimulate));
             }
 
@@ -103,7 +106,6 @@ namespace Prototype
             {
                 mServerTick = ss.TickNow - sot + mSimulateTicks;
                 float nt = (float)(mSimulateTicks + 1) / sot;
-                TClient.Instance.input.AckInput(mAckInputs.Dequeue());
                 UpdateTickObjects(mSimulateTicks, nt, ss);
                 ++mSimulateTicks;
                 ++mServerTick;
@@ -117,6 +119,15 @@ namespace Prototype
                     mProcessing = mCachedSnapshots.Dequeue();
                     Snapshot.GetRootAsSnapshot(mProcessing, ss);
                 }
+            }
+        }
+
+        void Predict()
+        {
+            foreach (var kv in mTickObjects)
+            {
+                if (kv.Value.predict)
+                    kv.Value.Predict();
             }
         }
 
@@ -139,8 +150,25 @@ namespace Prototype
                             break;
                         }
                     }
-                    tickObject.Lerping(nt, mServerTick, tob);
+
+                    if (!tickObject.predict)
+                        tickObject.Lerping(nt, tob);
                 }
+            }
+        }
+
+        void ApplyDeltaToObjectThatPredicts(ByteBuffer byteBuffer)
+        {
+            Snapshot snapshot = InstancePool.Get<Snapshot>();
+            Snapshot.GetRootAsSnapshot(byteBuffer, snapshot);
+
+            TickObjectBox tob = InstancePool.Get<TickObjectBox>();
+            for (int i = 0; i < snapshot.TickObjectLength; ++i)
+            {
+                snapshot.GetTickObject(tob, i);
+                ITickObjectClient tickObject;
+                if (mTickObjects.TryGetValue(tob.Id, out tickObject) && tickObject.predict)
+                    tickObject.ApplyDelta(tob);
             }
         }
     }

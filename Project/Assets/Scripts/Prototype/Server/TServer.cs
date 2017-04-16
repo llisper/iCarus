@@ -19,13 +19,16 @@ namespace Prototype
         public float updaterate { get; private set; }
         public uint tickCount { get { return mTickCount; } }
         public uint snapshotOverTick { get { return mSnapshotOverTick; } }
+        public int inputchoke { get; private set; }
         public List<ITickObject> tickObjects { get { return mTickObjects; } }
         public NetServer netServer { get { return mUdpListener.netServer; } }
+        public List<TPlayer> players { get { return mPlayers; } }
 
         public void StartServer()
         {
             tickrate = AppConfig.Instance.tickrate;
-            updaterate = AppConfig.Instance.server.updaterate;
+            updaterate = AppConfig.Instance.updaterate;
+            inputchoke = Mathf.Max(1, Mathf.CeilToInt(AppConfig.Instance.cmdrate / tickrate));
             mSnapshotOverTick = (uint)Mathf.FloorToInt(updaterate / tickrate);
             TSLog.InfoFormat("tickrate:{0}, updaterate:{1}, ss/t:{2}", tickrate, updaterate, mSnapshotOverTick);
 
@@ -43,7 +46,7 @@ namespace Prototype
                     LocalAddress = System.Net.IPAddress.Any,
                     Port = AppConfig.Instance.pacMan.port,
                     MaximumConnections = AppConfig.Instance.pacMan.maxConnection,
-                    DefaultOutgoingMessageCapacity = 1024,
+                    DefaultOutgoingMessageCapacity = 10240,
                     SimulatedDuplicatesChance = AppConfig.Instance.simulatedDuplicatesChance,
                     SimulatedLoss = AppConfig.Instance.simulatedLoss,
                     SimulatedMinimumLatency = AppConfig.Instance.simulatedMinimumLatency,
@@ -161,7 +164,7 @@ namespace Prototype
                     msg, 
                     p.connection,
                     NetDeliveryMethod.ReliableOrdered,
-                    (int)SequenceChannel.Snapshot);
+                    0);
             }
             MessageBuilder.Unlock();
         }

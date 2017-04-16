@@ -16,8 +16,12 @@ namespace Prototype
     public interface ITickObjectClient
     {
         int id { get; }
-        void FullUpdate(uint tick, TickObjectBox box);
+        void FullUpdate(TickObjectBox box);
         void EventUpdate(TickEventT evt);
-        void Lerping(float t, uint tick, TickObjectBox box);
+        void Lerping(float t, TickObjectBox box);
+
+        bool predict { get; }
+        void ApplyDelta(TickObjectBox box);
+        void Predict();
     }
 }

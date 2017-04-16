@@ -13,9 +13,8 @@ namespace Prototype
             EditorGUILayout.Toggle("hasFullUpdated", script.hasFullUpdated);
             EditorGUILayout.IntField("serverTick", (int)script.serverTick, EditorStyles.label);
             EditorGUILayout.FloatField("simulateTicks", script.simulateTicks, EditorStyles.label);
-            EditorGUILayout.FloatField("timeScale", script.timeScale, EditorStyles.label);
             EditorGUILayout.IntField("snapshotCount", script.snapshotCount, EditorStyles.label);
-            EditorGUILayout.IntField("cacheBeforeLerping", (int)script.cacheBeforeLerping, EditorStyles.label);
+            EditorGUILayout.IntField("cacheSnapshots", (int)script.cacheSnapshots, EditorStyles.label);
         }
     }
 }

@@ -204,17 +204,27 @@ namespace iCarus.Network
 
         void HandleData(NetIncomingMessage message)
         {
-            MessageID id = (MessageID)message.ReadUInt16();
-            ushort len = message.ReadUInt16();
-            ByteBuffer byteBuffer = ByteBufferPool.Alloc(len);
+            ushort id = ushort.MaxValue;
+            ByteBuffer byteBuffer = null;
             try
             {
+                id = message.ReadUInt16();
+                ushort len = message.ReadUInt16();
+                byteBuffer = ByteBufferPool.Alloc(len);
                 message.ReadBytes(byteBuffer.Data, 0, len);
-                dispatcher.Fire(message.SenderConnection, id, byteBuffer, message);
+                var result = dispatcher.Fire(message.SenderConnection, (MessageID)id, byteBuffer, message);
+                if (result != MessageHandleResult.Processing)
+                    ByteBufferPool.Dealloc(ref byteBuffer);
             }
-            finally
+            catch (Exception e)
             {
                 ByteBufferPool.Dealloc(ref byteBuffer);
+                NetLog.Exception("HandleData throws exception", e);
+
+                if (id != ushort.MaxValue)
+                    NetLog.Error("Caught exception when processing message " + (MessageID)id);
+                else
+                    NetLog.Error("Caught exception when processing message");
             }
         }
 
