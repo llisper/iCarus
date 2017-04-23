@@ -23,9 +23,9 @@ namespace Prototype
         public int choke { get { return Mathf.Max(0, mInputQueue.Count - SyncManager.Instance.inputchoke); } }
         public InputData currentInput { get { return mCurrentInput; } }
 
-        uint[] mAckInputs;
-        InputData mCurrentInput;
-        Queue<InputData> mInputQueue = new Queue<InputData>();
+        internal uint[] mAckInputs;
+        internal InputData mCurrentInput;
+        internal Queue<InputData> mInputQueue = new Queue<InputData>();
 
         Player()
         {

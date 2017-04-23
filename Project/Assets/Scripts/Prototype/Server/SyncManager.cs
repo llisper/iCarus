@@ -123,10 +123,10 @@ namespace Prototype
             }
         }
 
-        uint mTickCount = 0;
-        uint mSnapshotOverTick;
-        List<Player> mPlayersToSendDelta = new List<Player>();
-        List<Player> mPlayersToSendFull = new List<Player>();
-        List<ITickObject> mTickObjects = new List<ITickObject>();
+        internal uint mTickCount = 0;
+        internal uint mSnapshotOverTick;
+        internal List<Player> mPlayersToSendDelta = new List<Player>();
+        internal List<Player> mPlayersToSendFull = new List<Player>();
+        internal List<ITickObject> mTickObjects = new List<ITickObject>();
     }
 }

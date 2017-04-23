@@ -1,14 +1,8 @@
-﻿using UnityEngine;
-
-using System.Collections.Generic;
-
-using iCarus;
+﻿using iCarus;
 using iCarus.Log;
 using iCarus.Network;
 using iCarus.Singleton;
-using Protocol;
 using Foundation;
-using FlatBuffers;
 using Lidgren.Network;
 
 namespace Prototype
