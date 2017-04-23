@@ -1,26 +1,17 @@
 ﻿using UnityEngine;
 using System;
 using System.Collections.Generic;
-using Protocol;
 using Foundation;
 using FlatBuffers;
 using iCarus.Network;
+using iCarus.Singleton;
 using Lidgren.Network;
+using Prototype.Common;
 
 namespace Prototype
 {
-    public class TInput 
+    public sealed class InputManager : SingletonBehaviour<InputManager>
     {
-        public struct InputData
-        {
-            public uint index;          // sample index
-            public byte keyboard;       // W-A-S-D
-            public bool mouseHasHit;     
-            public Vector3 mouseHit;    // X-Z position on Ground hit by mouse
-
-            public bool valid { get { return index > 0; } }
-        }
-
         public InputData current = default(InputData);
         public List<InputData> inputQueue { get { return mInputQueue; } }
 
@@ -54,36 +45,36 @@ namespace Prototype
 
             if ((mIndex++) % mCmdOverTick == 0)
             {
-                var fbb = MessageBuilder.Lock();
-                try
+
+                using (var builder = MessageBuilder.Get())
                 {
-                    var array = OffsetArrayPool.Alloc<Protocol.InputData>((int)mCmdOverTick);
-                    for (int i = 0; i < mCmdOverTick; ++i)
+                    FlatBufferBuilder fbb = builder.fbb;
+                    try
                     {
-                        InputData d = mInputQueue[mInputQueue.Count - (int)mCmdOverTick + i];
-                        Protocol.InputData.StartInputData(fbb);
-                        Protocol.InputData.AddIndex(fbb, d.index);
-                        Protocol.InputData.AddKeyboard(fbb, d.keyboard);
-                        Protocol.InputData.AddMouseHasHit(fbb, d.mouseHasHit);
-                        if (d.mouseHasHit)
-                            Protocol.InputData.AddMouseHit(fbb, Vec3.CreateVec3(fbb, d.mouseHit.x, d.mouseHit.y, d.mouseHit.z));
-                        array.offsets[array.position++] = Protocol.InputData.EndInputData(fbb);
+                        var array = OffsetArrayPool.Alloc<Protocol.InputData>((int)mCmdOverTick);
+                        for (int i = 0; i < mCmdOverTick; ++i)
+                        {
+                            InputData d = mInputQueue[mInputQueue.Count - (int)mCmdOverTick + i];
+                            Protocol.InputData.StartInputData(fbb);
+                            Protocol.InputData.AddIndex(fbb, d.index);
+                            Protocol.InputData.AddKeyboard(fbb, d.keyboard);
+                            Protocol.InputData.AddMouseHasHit(fbb, d.mouseHasHit);
+                            if (d.mouseHasHit)
+                                Protocol.InputData.AddMouseHit(fbb, Protocol.Vec3.CreateVec3(fbb, d.mouseHit.x, d.mouseHit.y, d.mouseHit.z));
+                            array.offsets[array.position++] = Protocol.InputData.EndInputData(fbb);
+                        }
+                        Protocol.Msg_CS_InputDataArray.StartInputDataVector(fbb, array.position);
+                        var offset = Helpers.SetVector(fbb, array);
+                        fbb.Finish(Protocol.Msg_CS_InputDataArray.CreateMsg_CS_InputDataArray(fbb, offset).Value);
+                        connector.SendMessage(
+                            connector.CreateMessage(Protocol.MessageID.Msg_CS_InputDataArray, fbb),
+                            NetDeliveryMethod.UnreliableSequenced,
+                            1);
                     }
-                    InputDataArray.StartInputDataVector(fbb, array.position);
-                    var offset = Helpers.SetVector(fbb, array);
-                    fbb.Finish(InputDataArray.CreateInputDataArray(fbb, offset).Value);
-                    connector.SendMessage(
-                        connector.CreateMessage(MessageID.InputDataArray, fbb),
-                        NetDeliveryMethod.UnreliableSequenced,
-                        1);
-                }
-                catch (Exception e)
-                {
-                    TCLog.Exception(e);
-                }
-                finally
-                {
-                    MessageBuilder.Unlock();
+                    catch (Exception e)
+                    {
+                        TCLog.Exception(e);
+                    }
                 }
             }
         }

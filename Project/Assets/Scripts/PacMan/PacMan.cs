@@ -62,12 +62,9 @@ namespace PacMan
         {
             foreach (Type type in types)
             {
-                Coex coex = StartCoroutine<ISingleton>(Singletons.Add(type));
-                yield return coex;
-
                 try
                 {
-                    mSingletons.Add(coex.ReturnValue<ISingleton>());
+                    mSingletons.Add(Singletons.Add(type));
                 }
                 catch (Exception e)
                 {
@@ -75,6 +72,7 @@ namespace PacMan
                     GameLog.Exception(e);
                 }
             }
+            yield break;
         }
 
         void DestroySingletons()

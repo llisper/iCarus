@@ -1,50 +1,62 @@
 ﻿using UnityEngine;
+using iCarus;
+using iCarus.Log;
 using iCarus.Network;
 using iCarus.Singleton;
 using Foundation;
 
 namespace Prototype
 {
+    public class TCLog : Logging.Define<TCLog> { }
+    public class ClientException : Exception { }
     public sealed class Game : SingletonBehaviour<Game>
     {
-        public float updaterate { get; private set; }
-        public float tickrate { get; private set; }
-        public float cmdrate { get; private set; }
-        public uint snapshotOverTick { get; private set; }
+        public float  updaterate { get; private set; }
+        public float  tickrate { get; private set; }
+        public float  cmdrate { get; private set; }
+        public uint   snapshotOverTick { get; private set; }
+
+        public int id { get; set; }
+        public string playerName { get; private set; }
 
         public UdpConnector netlayer { get; private set; }
-        public TInput input { get; private set; }
-        public SyncManager syncManager { get; private set; }
-        public GameState.GameState gameState { get; private set; }
+        public GameState.GameState gameState { get { return mGameState; } }
 
-        public void Initialize()
+        GameState.GameState mGameState;
+
+        public static void Initialize()
+        {
+            Game game = Singletons.Add<Game>();
+            game.Run();
+        }
+
+        void Run()
         {
             updaterate = AppConfig.Instance.updaterate;
             tickrate = AppConfig.Instance.tickrate;
             cmdrate = AppConfig.Instance.cmdrate;
             snapshotOverTick = (uint)Mathf.FloorToInt(updaterate / tickrate);
+            this.playerName = "anonymous player";
+
+            Singletons.Add<InputManager>();
+            Singletons.Add<SyncManagerClient>();
 
             netlayer = new UdpConnector();
-            input = new TInput();
-            syncManager = new SyncManager();
-            gameState = new GameState.Init();
+            mGameState = new GameState.Init();
 
             Time.fixedDeltaTime = tickrate;
-            gameState.Start();
-        }
-
-        public void TransitGameStateTo<T>(params object[] args) where T : GameState.GameState
-        {
-            gameState = GameState.GameState.TransitTo<T>(gameState, args);
+            mGameState.Start();
         }
 
         void Update()
         {
-            var newState = gameState.Update();
-            if (null != newState)
-                gameState = newState;
+            GameState.GameState.Update(ref mGameState);
+        }
 
+        void FixedUpdate()
+        {
             netlayer.Update();
+            GameState.GameState.FixedUpdate(mGameState);
         }
 
         void OnDestroy()

@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Prototype.GameState
 {
@@ -12,12 +9,12 @@ namespace Prototype.GameState
             throw new NotImplementedException();
         }
 
-        public override GameState Update()
+        protected override void Update()
         {
             throw new NotImplementedException();
         }
 
-        public override void Destroy()
+        protected override void Destroy()
         {
             throw new NotImplementedException();
         }

@@ -31,7 +31,7 @@ namespace PacMan
                 onNetStatusChanged = OnNetStatusChanged,
             };
             mConnector.Start(netConfig);
-            mConnector.Connect(playerName);
+            // mConnector.Connect(playerName);
         }
 
         void Update()

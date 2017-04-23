@@ -38,6 +38,8 @@ namespace Foundation
         public float cmdrate = 0.03f;    // 33.3 p/s send input every 2 ticks
         public uint cachesnapshots = 2;  // cache number of snapshots before simulate
         public int defaultOutgoingMessageCapacity = 4096;
+        public float authTimeout = 2f;
+        public float playerLinger = 60f;
         #endregion configuration
 
         string mConfigFileName;
@@ -47,7 +49,7 @@ namespace Foundation
             mConfigFileName = config;
         }
 
-        IEnumerator SingletonInit()
+        public IEnumerator Initialize()
         {
             yield return GameInitializer.Instance.StartCoroutine(BytesReader.Read(mConfigFileName, bytes =>
             {

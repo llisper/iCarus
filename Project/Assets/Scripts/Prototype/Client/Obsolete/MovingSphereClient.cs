@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿/*
+using UnityEngine;
 using FlatBuffers;
 using Protocol;
 using System;
@@ -64,3 +65,4 @@ namespace Prototype
         Quaternion mRotation;
     }
 }
+*/

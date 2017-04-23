@@ -52,14 +52,6 @@ table TickObjectBox
     events:[TickEventT];
 }
 
-table Snapshot
-{
-    tick_now:uint;
-    tick_num:uint;
-    full:bool;
-    tick_object:[TickObjectBox];
-}
-
 table InputData
 {
     index:uint;
@@ -68,7 +60,36 @@ table InputData
     mouse_hit:Vec3;
 }
 
-table InputDataArray
+table Msg_CS_FullUpdate
+{
+}
+
+table Msg_SC_Snapshot
+{
+    tick_now:uint;
+    tick_num:uint;
+    full:bool;
+    tick_object:[TickObjectBox];
+}
+
+table Msg_CS_InputDataArray
 {
     input_data:[InputData];
+}
+
+table Msg_CS_NetIdentity
+{
+    name:string;
+}
+ 
+table Msg_SC_NetIdentity
+{
+    success:bool;
+    error:string;
+    id:int;
+}
+
+table Msg_SC_Reconnect
+{
+    success:bool;
 }

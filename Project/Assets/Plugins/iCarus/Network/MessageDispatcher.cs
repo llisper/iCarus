@@ -23,7 +23,12 @@ namespace iCarus.Network
     {
         public void Subscribe(MessageID id, MessageHandler handler)
         {
-            mHandlers[(int)id] = handler;
+            mHandlers[(int)id] += handler;
+        }
+
+        public void Unsubscribe(MessageID id, MessageHandler handler)
+        {
+            mHandlers[(int)id] -= handler;
         }
 
         public MessageHandleResult Fire(NetConnection connection, MessageID id, ByteBuffer byteBuffer, NetIncomingMessage message)

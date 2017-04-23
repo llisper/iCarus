@@ -1,27 +1,49 @@
 ﻿using System;
+using Lidgren.Network;
 
 namespace Prototype.GameState
 {
     public abstract class GameState
     {
-
-        public static GameState TransitTo<T>(GameState from, params object[] args) where T : GameState
+        public static void Update(ref GameState gameState)
         {
-            if (null != from)
-                from.Destroy();
+            if (null != gameState.next)
+            {
+                GameState next = gameState.next;
+                gameState.Destroy();
+                next.Start();
+                GameStateLog.InfoFormat(
+                    "game state transition: {0} -> {1}",
+                    gameState.GetType().Name,
+                    next.GetType().Name);
+                gameState = next;
+            }
+            gameState.Update();
+        }
 
+        public static void FixedUpdate(GameState gameState)
+        {
+            gameState.FixedUpdate();
+        }
+
+        GameState next;
+
+        protected void TransitTo<T>(params object[] args) where T : GameState
+        {
             GameState newState = (GameState)Activator.CreateInstance(typeof(T), args);
-            newState.Start();
-            return newState;
+            next = newState;
         }
 
-        protected GameState TransitTo<T>(params object[] args) where T : GameState
+        public    abstract void Start();
+        protected abstract void Update();
+        protected virtual  void FixedUpdate() { }
+        protected abstract void Destroy();
+
+        protected Game game { get { return Game.Instance; } }
+
+        protected bool ConnectionLost(NetConnectionStatus status)
         {
-            return TransitTo<T>(this, args);
+            return status == NetConnectionStatus.None || status > NetConnectionStatus.Connected;
         }
-
-        public abstract void Start();
-        public abstract GameState Update();
-        public abstract void Destroy();
     }
 }

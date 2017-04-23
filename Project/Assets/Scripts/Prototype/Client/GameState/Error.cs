@@ -1,25 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
+﻿
 namespace Prototype.GameState
 {
     public class Error : GameState
     {
-        public override void Start()
+        public Error(string error)
         {
-            throw new NotImplementedException();
+            // notify ui ??
         }
 
-        public override GameState Update()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void Destroy()
-        {
-            throw new NotImplementedException();
-        }
+        public override void Start() { }
+        protected override void Update() { }
+        protected override void Destroy() { }
     }
 }

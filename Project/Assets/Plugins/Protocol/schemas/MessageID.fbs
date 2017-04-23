@@ -2,8 +2,12 @@ namespace Protocol;
 
 enum MessageID : ushort
 {
-    Snapshot,
-    InputDataArray,
+    Msg_CS_FullUpdate,
+    Msg_SC_Snapshot,
+    Msg_CS_InputDataArray,
+    Msg_CS_NetIdentity,
+    Msg_SC_NetIdentity,
+    Msg_SC_Reconnect,
     Count,
 }
 

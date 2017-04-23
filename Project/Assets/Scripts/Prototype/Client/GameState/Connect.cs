@@ -8,7 +8,20 @@ namespace Prototype.GameState
     {
         public override void Start()
         {
-            Game.Instance.netlayer.Stop();
+            game.netlayer.Stop();
+            game.netlayer.Start(BuildConfiguration(OnNetStatusChanged));
+            game.netlayer.Connect();
+        }
+
+        protected override void Update() { }
+
+        protected override void Destroy()
+        {
+            game.netlayer.onNetStatusChanged -= OnNetStatusChanged;
+        }
+
+        public static UdpConnector.Configuration BuildConfiguration(UdpConnector.OnNetStatusChanged onNetStatusChanged)
+        {
             UdpConnector.Configuration config = new UdpConnector.Configuration()
             {
                 host = AppConfig.Instance.pacMan.host,
@@ -21,30 +34,23 @@ namespace Prototype.GameState
                     SimulatedMinimumLatency = AppConfig.Instance.simulatedMinimumLatency,
                     SimulatedRandomLatency = AppConfig.Instance.simulatedRandomLatency,
                 },
-                onNetStatusChanged = OnNetStatusChanged,
+                onNetStatusChanged = onNetStatusChanged,
             };
-            Game.Instance.netlayer.Start(config);
-        }
-
-        public override GameState Update() { return null; }
-
-        public override void Destroy()
-        {
-            Game.Instance.netlayer.onNetStatusChanged -= OnNetStatusChanged;
+            return config;
         }
 
         void OnNetStatusChanged(UdpConnector netlayer, NetConnectionStatus status, string reason)
         {
-            if (status > NetConnectionStatus.None && status <= NetConnectionStatus.Connected)
+            if (!ConnectionLost(status))
             {
-                GameStateLog.Info("Connect: " + status);
+                GameStateLog.Info("connect net status:" + status);
                 if (status == NetConnectionStatus.Connected)
-                    Game.Instance.TransitGameStateTo<VerifyIdentity>();
+                    TransitTo<VerifyIdentity>();
             }
             else
             {
-                GameStateLog.Error("Connect: " + status);
-                Game.Instance.TransitGameStateTo<Error>();
+                GameStateLog.ErrorFormat("connect net status:{0}, reason:{1}", status, reason);
+                TransitTo<Error>(reason);
             }
         }
     }

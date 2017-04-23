@@ -19,7 +19,7 @@ namespace iCarus.Network
         public MessageDispatcher dispatcher { get { return mDispatcher; } }
         public NetServer netServer { get { return mNetServer; } }
 
-        public delegate bool OnIncommingConnection(NetConnection connection, string name, out string denyReason);
+        public delegate void OnIncommingConnection(NetConnection connection);
         public delegate void OnConnectionStatusChanged(NetConnection connection, string reason);
 
         public class Configuration
@@ -163,28 +163,10 @@ namespace iCarus.Network
 
         void HandleConnectionApproval(NetIncomingMessage message)
         {
-            string name = message.ReadString();
-
-            bool accept = false;
-            string denyReason = String.Empty;
             NetConnection conn = message.SenderConnection;
-            if (null != mConfig.onIncommingConnection)
-                accept = mConfig.onIncommingConnection(conn, name, out denyReason);
-
-            if (accept)
-            {
-                conn.Approve();
-                NetLog.DebugFormat("{0} Approve connection {1}", appIdentifier, conn.RemoteEndPoint);
-            }
-            else
-            {
-                message.SenderConnection.Deny(denyReason);
-                NetLog.DebugFormat(
-                    "{0} Deny connection {1}, {2}",
-                    appIdentifier,
-                    conn.RemoteEndPoint,
-                    denyReason);
-            }
+            mConfig.onIncommingConnection(conn);
+            conn.Approve();
+            NetLog.DebugFormat("{0} Approve connection {1}", appIdentifier, conn.RemoteEndPoint);
         }
 
         void HandleStatusChanged(NetIncomingMessage message)

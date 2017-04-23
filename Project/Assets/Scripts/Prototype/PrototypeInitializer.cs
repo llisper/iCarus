@@ -9,23 +9,15 @@ namespace Prototype
     {
         void Awake()
         {
-            StartCoroutine(AwakeRoutine());
-        }
-
-        IEnumerator AwakeRoutine()
-        {
-            yield return StartCoroutine(Singletons.Add<TServer>());
-            yield return StartCoroutine(Singletons.Add<TClient>());
-
             if (GameInitializer.Instance.isHeadless)
             {
-                TServer.Instance.StartServer();
+                Server.Initialize();
             }
             else
             {
                 StartPrototype ui = UI.Instance.Show<StartPrototype>();
-                ui.onStartServer = TServer.Instance.StartServer;
-                ui.onStartClient = TClient.Instance.StartClient;
+                ui.onStartServer = Server.Initialize;
+                ui.onStartClient = Game.Initialize;
             }
         }
     }

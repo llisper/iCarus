@@ -36,7 +36,12 @@ namespace iCarus.Network
 
             mNetClient = new NetClient(mConfig.netPeerConfig);
             mNetClient.Start();
-            mNetClient.Connect(host, port);
+        }
+
+        public void Connect(NetOutgoingMessage hailMessage = null)
+        {
+            if (connectionStatus == NetConnectionStatus.Disconnected)
+                mNetClient.Connect(host, port, hailMessage);
         }
 
         [Obsolete]
@@ -102,6 +107,11 @@ namespace iCarus.Network
                 }
                 mNetClient.Recycle(message);
             }
+        }
+
+        public NetOutgoingMessage CreateMessage()
+        {
+            return mNetClient.CreateMessage();
         }
 
         public NetOutgoingMessage CreateMessage(MessageID id, FlatBufferBuilder fbb)

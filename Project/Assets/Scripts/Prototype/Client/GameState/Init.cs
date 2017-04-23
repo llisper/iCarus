@@ -8,17 +8,14 @@ namespace Prototype.GameState
     {
         public override void Start()
         {
-            Game.Instance.input.Init();
+            InputManager.Instance.Init();
             GameStateLog.Info("Init Input");
-            Game.Instance.syncManager.Init();
+            SyncManagerClient.Instance.Init();
             GameStateLog.Info("Init SyncManager");
+            TransitTo<Connect>();
         }
 
-        public override GameState Update()
-        {
-            return TransitTo<Connect>();
-        }
-
-        public override void Destroy() { }
+        protected override void Update() { }
+        protected override void Destroy() { }
     }
 }

@@ -79,10 +79,9 @@ namespace iCarus.Singleton
         /// </summary>
         /// <typeparam name="T">单件类型</typeparam>
         /// <param name="args">传递给单件构造函数的参数, 对MonoBehaviour不适用</param>
-        /// <returns>迭代器</returns>
-        public static IEnumerator Add<T>(params object[] args)
+        public static T Add<T>(params object[] args)
         {
-            return Add(typeof(T), args);
+            return (T)Add(typeof(T), args);
         }
 
         /// <summary>
@@ -90,8 +89,7 @@ namespace iCarus.Singleton
         /// </summary>
         /// <param name="type">单件类型</param>
         /// <param name="args">传递给单件构造函数的参数, 对MonoBehaviour不适用</param>
-        /// <returns>迭代器</returns>
-        public static IEnumerator Add(Type type, params object[] args)
+        public static ISingleton Add(Type type, params object[] args)
         {
             BaseType baseType = GetBaseType(type);
             if (baseType == BaseType.None ||
@@ -125,13 +123,9 @@ namespace iCarus.Singleton
                 null,
                 new object[] { inst });
 
-            object ret = CallSingletonMethod("SingletonInit", inst, inst.GetType());
-            if (null != ret && ret is IEnumerator)
-                yield return root.StartCoroutine((IEnumerator)ret);
-
             root.singletonInstances.Add(inst);
             SingletonLog.InfoFormat("{0} Added", type.FullName);
-            yield return inst;
+            return inst;
         }
 
         public static void Remove(ISingleton singleton)

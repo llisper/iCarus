@@ -49,8 +49,9 @@ public class GameInitializer : MonoBehaviour
         FlatBuffersInitializer.Initialize(typeof(ProtocolInitializer).Assembly);
         MessageBuilder.Initialize();
         yield return StartCoroutine(InitializeLog());
-        yield return StartCoroutine(Singletons.Add<AppConfig>("Config/config.json"));
-        yield return StartCoroutine(Singletons.Add<CoexEngine>());
+        AppConfig appConfig = Singletons.Add<AppConfig>("Config/config.json");
+        yield return StartCoroutine(appConfig.Initialize());
+        Singletons.Add<CoexEngine>();
 
         if (!isHeadless)
         {

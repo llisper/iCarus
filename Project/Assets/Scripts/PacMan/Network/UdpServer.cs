@@ -37,11 +37,11 @@ namespace PacMan
             mUdpListener.Stop();
         }
 
-        bool OnIncommingConnection(NetConnection connection, string name, out string denyReason)
+        void OnIncommingConnection(NetConnection connection)
         {
-            denyReason = null;
-            GameLog.InfoFormat("Incomming connection {0} - {1}", connection.RemoteEndPoint, name);
-            return true;
+            //denyReason = null;
+            //GameLog.InfoFormat("Incomming connection {0} - {1}", connection.RemoteEndPoint, name);
+            //return true;
         }
 
         void OnConnectionStatusChanged(NetConnection connection, string reason)

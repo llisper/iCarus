@@ -1,30 +1,54 @@
-﻿using FlatBuffers;
+﻿using System;
+using FlatBuffers;
 
 namespace iCarus.Network
 {
     public static class MessageBuilder
     {
-        static FlatBufferBuilder sBuilder;
-        static bool sLocked;
+        public class Builder : IDisposable
+        {
+            FlatBufferBuilder mBuilder;
+            bool mLock = false;
+
+            internal Builder(FlatBufferBuilder fbb)
+            {
+                mBuilder = fbb;
+                mBuilder.Clear();
+            }
+
+            internal Builder Lock()
+            {
+                if (mLock)
+                    Exception.Throw<NetworkException>("FlatBufferBuilder has already been locked, recursive lock is not allowed");
+                mLock = true;
+                mBuilder.Clear();
+                return this;
+            }
+
+            public FlatBufferBuilder fbb { get { return mBuilder; } }
+
+            public static implicit operator FlatBufferBuilder(Builder builder)
+            {
+                return builder.mBuilder;
+            }
+
+            public void Dispose()
+            {
+                mLock = false;
+                mBuilder.Clear();
+            }
+        }
+
+        static Builder sBuilder;
         
         public static void Initialize(int defaultOutgoingMessageCapacity = 16384)
         {
-            sBuilder = new FlatBufferBuilder(defaultOutgoingMessageCapacity);
+            sBuilder = new Builder(new FlatBufferBuilder(defaultOutgoingMessageCapacity));
         }
 
-        public static FlatBufferBuilder Lock()
+        public static Builder Get()
         {
-            if (sLocked)
-                Exception.Throw<NetworkException>("FlatBufferBuilder has already been locked, recursive lock is not allowed");
-            sLocked = true;
-            sBuilder.Clear();
-            return sBuilder;
-        }
-
-        public static void Unlock()
-        {
-            sLocked = false;
-            sBuilder.Clear();
+            return sBuilder.Lock();
         }
     }
 }

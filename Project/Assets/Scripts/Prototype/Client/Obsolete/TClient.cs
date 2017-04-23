@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿/*
+using UnityEngine;
 using System.Collections.Generic;
 
 using iCarus.Log;
@@ -12,7 +13,6 @@ using Lidgren.Network;
 
 namespace Prototype
 {
-    public class TCLog : Logging.Define<TCLog> { }
     public sealed class TClient : SingletonBehaviour<TClient>
     {
         public string playerName = "anonymous";
@@ -115,3 +115,4 @@ namespace Prototype
         SyncManager mSyncManager = new SyncManager();
     }
 }
+*/

@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
-
 using System.Collections.Generic;
-
+using iCarus.Singleton;
 using Protocol;
 using Foundation;
 using FlatBuffers;
@@ -9,7 +8,7 @@ using Lidgren.Network;
 
 namespace Prototype
 {
-    public class SyncManager
+    public sealed class SyncManagerClient : SingletonBehaviour<SyncManagerClient>
     {
         public bool hasFullUpdated { get { return mHasFullUpdated; } }
         public uint serverTick { get { return mServerTick; } }
@@ -30,7 +29,7 @@ namespace Prototype
             mInitialized = true;
         }
 
-        public void FullUpdate(Snapshot snapshot)
+        public void FullUpdate(Msg_SC_Snapshot snapshot)
         {
             TickObjectBox tob = InstancePool.Get<TickObjectBox>();
             for (int i = 0; i < snapshot.TickObjectLength; ++i)
@@ -60,9 +59,9 @@ namespace Prototype
             {
                 mCachedSnapshots.Enqueue(byteBuffer);
                 int choke = msg.ReadInt32();
-                TClient.Instance.input.UpdateChoke(choke);
-                for (int i = 0; i < TClient.Instance.snapshotOverTick; ++i)
-                    TClient.Instance.input.AckInput(msg.ReadUInt32());
+                InputManager.Instance.UpdateChoke(choke);
+                for (int i = 0; i < Game.Instance.snapshotOverTick; ++i)
+                    InputManager.Instance.AckInput(msg.ReadUInt32());
                 ApplyDeltaToObjectThatPredicts(byteBuffer);
             }
         }
@@ -90,7 +89,7 @@ namespace Prototype
                 mProcessing = mCachedSnapshots.Dequeue();
 
             int simulateCount = 1;
-            uint sot = TClient.Instance.snapshotOverTick;
+            uint sot = Game.Instance.snapshotOverTick;
             if (mCachedSnapshots.Count > cacheSnapshots - 1)
             {
                 uint k = (uint)mCachedSnapshots.Count;
@@ -99,8 +98,8 @@ namespace Prototype
                 simulateCount = Mathf.Max(1, Mathf.FloorToInt((float)ticksToSimulate / ticksSupposeToSimulate));
             }
 
-            Snapshot ss = InstancePool.Get<Snapshot>();
-            Snapshot.GetRootAsSnapshot(mProcessing, ss);
+            Msg_SC_Snapshot ss = InstancePool.Get<Msg_SC_Snapshot>();
+            Msg_SC_Snapshot.GetRootAsMsg_SC_Snapshot(mProcessing, ss);
             for (int i = 0; i < simulateCount; ++i)
             {
                 mServerTick = ss.TickNow - sot + mSimulateTicks;
@@ -116,7 +115,7 @@ namespace Prototype
                     if (mCachedSnapshots.Count <= 0)
                         break;
                     mProcessing = mCachedSnapshots.Dequeue();
-                    Snapshot.GetRootAsSnapshot(mProcessing, ss);
+                    Msg_SC_Snapshot.GetRootAsMsg_SC_Snapshot(mProcessing, ss);
                 }
             }
         }
@@ -130,7 +129,7 @@ namespace Prototype
             }
         }
 
-        void UpdateTickObjects(uint tickIndex, float nt, Snapshot snapshot)
+        void UpdateTickObjects(uint tickIndex, float nt, Msg_SC_Snapshot snapshot)
         {
             TickObjectBox tob = InstancePool.Get<TickObjectBox>();
             Protocol.TickEventT evt = InstancePool.Get<Protocol.TickEventT>();
@@ -158,8 +157,8 @@ namespace Prototype
 
         void ApplyDeltaToObjectThatPredicts(ByteBuffer byteBuffer)
         {
-            Snapshot snapshot = InstancePool.Get<Snapshot>();
-            Snapshot.GetRootAsSnapshot(byteBuffer, snapshot);
+            Msg_SC_Snapshot snapshot = InstancePool.Get<Msg_SC_Snapshot>();
+            Msg_SC_Snapshot.GetRootAsMsg_SC_Snapshot(byteBuffer, snapshot);
 
             TickObjectBox tob = InstancePool.Get<TickObjectBox>();
             for (int i = 0; i < snapshot.TickObjectLength; ++i)
