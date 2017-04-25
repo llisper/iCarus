@@ -24,7 +24,7 @@ namespace Prototype
         ByteBuffer mProcessing = null;
         Queue<ByteBuffer> mCachedSnapshots = new Queue<ByteBuffer>();
 
-        public void Init()
+        public void Initialize()
         {
             mInitialized = true;
         }

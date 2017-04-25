@@ -40,6 +40,7 @@ namespace Prototype
 
             Singletons.Add<InputManager>();
             Singletons.Add<SyncManagerClient>();
+            Singletons.Add<PlayerManagerClient>();
 
             netlayer = new UdpConnector();
             mGameState = new GameState.Init();

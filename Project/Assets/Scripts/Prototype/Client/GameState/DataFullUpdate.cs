@@ -11,7 +11,7 @@ namespace Prototype.GameState
         public override void Start()
         {
             game.netlayer.onNetStatusChanged += MonitorNetwork;
-            game.netlayer.dispatcher.Subscribe(MessageID.Msg_SC_Snapshot, FullUpdateHandler);
+            game.netlayer.dispatcher.Subscribe(MessageID.Msg_SC_FullUpdate, FullUpdateHandler);
             FullUpdateRequest();
         }
 
@@ -22,7 +22,7 @@ namespace Prototype.GameState
         protected override void Destroy()
         {
             game.netlayer.onNetStatusChanged -= MonitorNetwork;
-            game.netlayer.dispatcher.Unsubscribe(MessageID.Msg_SC_Snapshot, FullUpdateHandler);
+            game.netlayer.dispatcher.Unsubscribe(MessageID.Msg_SC_FullUpdate, FullUpdateHandler);
         }
 
         void FullUpdateRequest()
@@ -43,20 +43,19 @@ namespace Prototype.GameState
             ByteBuffer byteBuffer,
             NetIncomingMessage message)
         {
+            Msg_SC_FullUpdate fullupdate = InstancePool.Get<Msg_SC_FullUpdate>();
+            Msg_SC_FullUpdate.GetRootAsMsg_SC_FullUpdate(byteBuffer, fullupdate);
+
+            Msg_SC_UpdatePlayers updateplayers = InstancePool.Get<Msg_SC_UpdatePlayers>();
+            fullupdate.GetPlayers(updateplayers);
+            PlayerManagerClient.Instance.UpdatePlayers(updateplayers);
+
             Msg_SC_Snapshot snapshot = InstancePool.Get<Msg_SC_Snapshot>();
-            Msg_SC_Snapshot.GetRootAsMsg_SC_Snapshot(byteBuffer, snapshot);
-            if (snapshot.Full)
-            {
-                SyncManagerClient.Instance.FullUpdate(snapshot);
-                GameStateLog.Info("apply full update");
-                TransitTo<InGame>();
-            }
-            else
-            {
-                string error = "server reply full update request with a delta snapshot";
-                GameStateLog.Error(error);
-                TransitTo<Error>(error);
-            }
+            fullupdate.GetSnapshot(snapshot);
+            SyncManagerClient.Instance.FullUpdate(snapshot);
+            GameStateLog.Info("apply full update");
+            TransitTo<InGame>();
+
             return MessageHandleResult.Finished;
         }
 

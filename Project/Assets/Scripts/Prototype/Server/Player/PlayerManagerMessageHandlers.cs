@@ -13,9 +13,44 @@ namespace Prototype
             NetIncomingMessage message)
         {
             Player player = Get(connection);
-            if (null != player)
-                player.state = Player.State.FullSync;
+            if (null == player)
+            {
+                TSLog.ErrorFormat("player of connection[{0}] doesn't exist", connection.RemoteEndPoint);
+                return MessageHandleResult.Finished;
+            }
+
+            using (var builder = MessageBuilder.Get())
+            {
+                var fbb = builder.fbb;
+                var offset = Msg_SC_FullUpdate.CreateMsg_SC_FullUpdate(
+                    fbb,
+                    SyncPlayers(fbb),
+                    SyncManager.Instance.SampleSnapshot(fbb, true));
+                fbb.Finish(offset.Value);
+
+                NetOutgoingMessage msg = Server.Instance.netlayer.CreateMessage(MessageID.Msg_SC_FullUpdate, fbb);
+                player.connection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, 0);
+                player.state = Player.State.Playing;
+            }
             return MessageHandleResult.Finished;
+        }
+
+        Offset<Msg_SC_UpdatePlayers> SyncPlayers(FlatBufferBuilder fbb)
+        {
+            VectorOffset pvOffset = default(VectorOffset);
+            if (mPlayers.Count > 0)
+            {
+                var array = OffsetArrayPool.Alloc<Protocol.Player>(mPlayers.Count);
+                foreach (var p in mPlayers)
+                {
+                    var offset = Protocol.Player.CreatePlayer(fbb, p.id, fbb.CreateString(p.playerName));
+                    array.offsets[array.position++] = offset;
+                }
+                Msg_SC_UpdatePlayers.StartPlayersVector(fbb, array.position);
+                pvOffset = Helpers.SetVector(fbb, array);
+                OffsetArrayPool.Dealloc(ref array);
+            }
+            return Msg_SC_UpdatePlayers.CreateMsg_SC_UpdatePlayers(fbb, pvOffset);
         }
 
         MessageHandleResult NetIdentityHandler(

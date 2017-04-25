@@ -3,6 +3,8 @@ namespace Protocol;
 enum MessageID : ushort
 {
     Msg_CS_FullUpdate,
+    Msg_SC_FullUpdate,
+    Msg_SC_UpdatePlayers,
     Msg_SC_Snapshot,
     Msg_CS_InputDataArray,
     Msg_CS_NetIdentity,

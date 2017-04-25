@@ -15,7 +15,7 @@ namespace Prototype
         public InputData current = default(InputData);
         public List<InputData> inputQueue { get { return mInputQueue; } }
 
-        public void Init()
+        public void Initialize()
         {
             float cmdrate = AppConfig.Instance.cmdrate;
             float tickrate = AppConfig.Instance.tickrate;

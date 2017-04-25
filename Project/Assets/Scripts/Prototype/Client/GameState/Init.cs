@@ -8,10 +8,12 @@ namespace Prototype.GameState
     {
         public override void Start()
         {
-            InputManager.Instance.Init();
+            InputManager.Instance.Initialize();
             GameStateLog.Info("Init Input");
-            SyncManagerClient.Instance.Init();
-            GameStateLog.Info("Init SyncManager");
+            SyncManagerClient.Instance.Initialize();
+            GameStateLog.Info("Init SyncManagerClient");
+            PlayerManagerClient.Instance.Initialize();
+            GameStateLog.Info("Init PlayerManagerClient");
             TransitTo<Connect>();
         }
 

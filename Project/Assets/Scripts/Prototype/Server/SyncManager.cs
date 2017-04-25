@@ -58,6 +58,56 @@ namespace Prototype
             ++mTickCount;
         }
 
+        public Offset<Msg_SC_Snapshot> SampleSnapshot(FlatBufferBuilder fbb, bool full)
+        {
+            var tickObjectOffset = default(VectorOffset);
+            if (mTickObjects.Count > 0)
+            {
+                var boxArray = OffsetArrayPool.Alloc<TickObjectBox>(mTickObjects.Count);
+                foreach (ITickObject to in mTickObjects)
+                {
+                    int dataOffset = to.Snapshot(fbb, full);
+                    VectorOffset eventVectorOffset = default(VectorOffset);
+                    if (!full && to.eventType != TickEvent.NONE)
+                    {
+                        var eventVector = OffsetArrayPool.Alloc<TickEventT>((int)mSnapshotOverTick);
+                        for (uint i = 0; i < mSnapshotOverTick; ++i)
+                        {
+                            int eventOffset = to.SnapshotEvent(fbb, tickCount - mSnapshotOverTick + i);
+                            if (eventOffset >= 0)
+                            {
+                                eventVector.offsets[eventVector.position++] = TickEventT.CreateTickEventT(
+                                    fbb,
+                                    tickCount - mSnapshotOverTick + i,
+                                    to.eventType,
+                                    eventOffset);
+                            }
+                        }
+
+                        TickObjectBox.StartEventsVector(fbb, eventVector.position);
+                        eventVectorOffset = Helpers.SetVector(fbb, eventVector);
+                        OffsetArrayPool.Dealloc(ref eventVector);
+                    }
+                    boxArray.offsets[boxArray.position++] = TickObjectBox.CreateTickObjectBox(
+                        fbb,
+                        to.id,
+                        to.type,
+                        dataOffset,
+                        eventVectorOffset);
+                }
+
+                Msg_SC_Snapshot.StartTickObjectVector(fbb, boxArray.position);
+                tickObjectOffset = Helpers.SetVector(fbb, boxArray);
+                OffsetArrayPool.Dealloc(ref boxArray);
+            }
+            return Msg_SC_Snapshot.CreateMsg_SC_Snapshot(
+                fbb,
+                tickCount,
+                mSnapshotOverTick,
+                full,
+                tickObjectOffset);
+        }
+
         void SendSnapshotToPlayers(List<Player> players, bool full)
         {
             if (players.Count <= 0)
@@ -66,52 +116,7 @@ namespace Prototype
             using (var builder = MessageBuilder.Get())
             {
                 FlatBufferBuilder fbb = builder.fbb;
-                var tickObjectOffset = default(VectorOffset);
-                if (mTickObjects.Count > 0)
-                {
-                    var boxArray = OffsetArrayPool.Alloc<TickObjectBox>(mTickObjects.Count);
-                    foreach (ITickObject to in mTickObjects)
-                    {
-                        int dataOffset = to.Snapshot(fbb, full);
-                        VectorOffset eventVectorOffset = default(VectorOffset);
-                        if (!full && to.eventType != TickEvent.NONE)
-                        {
-                            var eventVector = OffsetArrayPool.Alloc<TickEventT>((int)mSnapshotOverTick);
-                            for (uint i = 0; i < mSnapshotOverTick; ++i)
-                            {
-                                int eventOffset = to.SnapshotEvent(fbb, tickCount - mSnapshotOverTick + i);
-                                if (eventOffset >= 0)
-                                {
-                                    eventVector.offsets[eventVector.position++] = TickEventT.CreateTickEventT(
-                                        fbb,
-                                        tickCount - mSnapshotOverTick + i,
-                                        to.eventType,
-                                        eventOffset);
-                                }
-                            }
-
-                            TickObjectBox.StartEventsVector(fbb, eventVector.position);
-                            eventVectorOffset = Helpers.SetVector(fbb, eventVector);
-                            OffsetArrayPool.Dealloc(ref eventVector);
-                        }
-                        boxArray.offsets[boxArray.position++] = TickObjectBox.CreateTickObjectBox(
-                            fbb,
-                            to.id,
-                            to.type,
-                            dataOffset,
-                            eventVectorOffset);
-                    }
-
-                    Msg_SC_Snapshot.StartTickObjectVector(fbb, boxArray.position);
-                    tickObjectOffset = Helpers.SetVector(fbb, boxArray);
-                    OffsetArrayPool.Dealloc(ref boxArray);
-                }
-                fbb.Finish(Msg_SC_Snapshot.CreateMsg_SC_Snapshot(
-                    fbb,
-                    tickCount,
-                    mSnapshotOverTick,
-                    full,
-                    tickObjectOffset).Value);
+                fbb.Finish(SampleSnapshot(fbb, full).Value);
 
                 foreach (var p in players)
                 {
