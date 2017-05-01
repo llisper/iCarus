@@ -4,7 +4,7 @@ using Prototype.Common;
 using Lidgren.Network;
 using FlatBuffers;
 
-namespace Prototype
+namespace Prototype.Server
 {
     public class Player
     {
@@ -21,11 +21,10 @@ namespace Prototype
         public State state { get; set; }
         public NetConnection connection { get; private set; }
         public int choke { get { return Mathf.Max(0, mInputQueue.Count - SyncManager.Instance.inputchoke); } }
-        public InputData currentInput { get { return mCurrentInput; } }
 
         internal uint[] mAckInputs;
-        internal InputData mCurrentInput;
         internal Queue<InputData> mInputQueue = new Queue<InputData>();
+        internal Avatar mAvatar;
 
         Player()
         {
@@ -34,28 +33,20 @@ namespace Prototype
 
         public static Player New(int id, string playerName, NetConnection connection)
         {
-            return new Player()
+            Player newPlayer = new Player()
             {
                 id = id,
                 playerName = playerName,
                 state = State.Loading,
                 connection = connection,
+                mAvatar = Avatar.New(id, PlayerManager.Instance.transform),
             };
+            newPlayer.mAvatar.common.color = UnityEngine.Random.ColorHSV();
+            newPlayer.mAvatar.SetInputProvider(new InputProvider(newPlayer.mAckInputs, newPlayer.mInputQueue));
+            return newPlayer;
         }
 
-        public void CFixedUpdate()
-        {
-            if (mInputQueue.Count <= 0)
-            {
-                mAckInputs[SyncManager.Instance.tickCount % mAckInputs.Length] = 0;
-                mCurrentInput = default(InputData);
-            }
-            else
-            {
-                mCurrentInput = mInputQueue.Dequeue();
-                mAckInputs[SyncManager.Instance.tickCount % mAckInputs.Length] = mCurrentInput.index;
-            }
-        }
+        public void CFixedUpdate() { }
 
         public void UpdateInput(Protocol.Msg_CS_InputDataArray inputDataArray)
         {

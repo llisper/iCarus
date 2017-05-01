@@ -5,7 +5,7 @@ using iCarus.Singleton;
 using Foundation;
 using Lidgren.Network;
 
-namespace Prototype
+namespace Prototype.Server
 {
     public class TSLog : Logging.Define<TSLog> { }
     public class ServerException : Exception { }

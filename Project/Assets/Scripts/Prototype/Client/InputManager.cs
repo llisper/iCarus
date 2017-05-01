@@ -8,7 +8,7 @@ using iCarus.Singleton;
 using Lidgren.Network;
 using Prototype.Common;
 
-namespace Prototype
+namespace Prototype.Game
 {
     public sealed class InputManager : SingletonBehaviour<InputManager>
     {

@@ -39,7 +39,7 @@ namespace Prototype.GameState
         protected virtual  void FixedUpdate() { }
         protected abstract void Destroy();
 
-        protected Game game { get { return Game.Instance; } }
+        protected Game.Game game { get { return Game.Game.Instance; } }
 
         protected bool ConnectionLost(NetConnectionStatus status)
         {

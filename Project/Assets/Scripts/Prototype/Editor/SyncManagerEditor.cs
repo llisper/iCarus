@@ -1,7 +1,7 @@
 using UnityEditor;
 using System.Text;
 
-namespace Prototype
+namespace Prototype.Server
 {
     [CustomEditor(typeof(SyncManager))]
     class SyncManagerEditor : Editor

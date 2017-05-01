@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
 using SimpleUI;
-using iCarus.Singleton;
 
 namespace Prototype
 {
@@ -11,13 +9,13 @@ namespace Prototype
         {
             if (GameInitializer.Instance.isHeadless)
             {
-                Server.Initialize();
+                Server.Server.Initialize();
             }
             else
             {
                 StartPrototype ui = UI.Instance.Show<StartPrototype>();
-                ui.onStartServer = Server.Initialize;
-                ui.onStartClient = Game.Initialize;
+                ui.onStartServer = Server.Server.Initialize;
+                ui.onStartClient = Game.Game.Initialize;
             }
         }
     }

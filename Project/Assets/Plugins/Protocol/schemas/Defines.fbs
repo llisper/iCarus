@@ -1,5 +1,7 @@
 namespace Protocol;
 
+table ProtocolInitializer {}
+
 enum MessageID : ushort
 {
     Msg_CS_FullUpdate,
@@ -12,5 +14,3 @@ enum MessageID : ushort
     Msg_SC_Reconnect,
     Count,
 }
-
-table ProtocolInitializer {}

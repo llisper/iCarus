@@ -1,0 +1,48 @@
+include "Defines.fbs";
+include "Structs.fbs";
+namespace Protocol;
+
+table Msg_SC_Snapshot
+{
+    tick_now:uint;
+    tick_num:uint;
+    full:bool;
+    tick_object:[TickObject];
+}
+
+table Msg_SC_UpdatePlayers
+{
+    players:[Player];
+}
+
+table Msg_CS_FullUpdate
+{
+}
+
+table Msg_SC_FullUpdate
+{
+    players:Msg_SC_UpdatePlayers;    
+    snapshot:Msg_SC_Snapshot;
+}
+
+table Msg_CS_InputDataArray
+{
+    input_data:[InputData];
+}
+
+table Msg_CS_NetIdentity
+{
+    name:string;
+}
+ 
+table Msg_SC_NetIdentity
+{
+    success:bool;
+    error:string;
+    id:int;
+}
+
+table Msg_SC_Reconnect
+{
+    success:bool;
+}

@@ -1,8 +1,8 @@
-﻿using System;
-using Protocol;
+﻿using Protocol;
 using FlatBuffers;
 using iCarus.Network;
 using Lidgren.Network;
+using Prototype.Game;
 
 namespace Prototype.GameState
 {

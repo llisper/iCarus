@@ -1,7 +1,7 @@
 ﻿using iCarus;
 using System.Collections.Generic;
 
-namespace Prototype
+namespace Prototype.Common
 {
     public class IdRange
     {
@@ -29,7 +29,7 @@ namespace Prototype
                     return id;
                 }
             }
-            Exception.Throw<ServerException>("id[{0},{1}) just run out", mStart, mStart + mLength);
+            Exception.Throw<GameException>("id[{0},{1}) just run out", mStart, mStart + mLength);
             return -1;
         }
 

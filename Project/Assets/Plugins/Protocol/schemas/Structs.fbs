@@ -1,0 +1,62 @@
+include "Defines.fbs";
+
+namespace Protocol;
+
+struct Vec3
+{
+    x:float;
+    y:float;
+    z:float;
+}
+
+union TickObjectType
+{
+    Avatar,
+    Kinematics,
+}
+
+table Avatar
+{
+    color:int; // full
+}
+
+table Kinematics
+{
+    pos:Vec3; // full|delta
+    rot:Vec3; // full|delta
+}
+
+union TickEventType
+{
+    PlaceHolder,
+}
+
+table PlaceHolder {}
+
+table TickEvent
+{
+    tick:uint;
+    ev:TickEventType;
+}
+
+table TickObject
+{
+    id:int;
+    data:TickObjectType;
+    events:[TickEvent];
+    tick_object:[TickObject];
+}
+
+table InputData
+{
+    index:uint;
+    keyboard:ubyte;
+    mouse_has_hit:bool;
+    mouse_hit:Vec3;
+}
+
+table Player
+{
+    id:int;
+    name:string;
+}

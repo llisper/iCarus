@@ -1,5 +1,5 @@
-﻿using System;
-using iCarus.Log;
+﻿using iCarus.Log;
+using Prototype.Game;
 
 namespace Prototype.GameState
 {

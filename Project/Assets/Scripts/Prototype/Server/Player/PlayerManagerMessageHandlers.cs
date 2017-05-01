@@ -3,7 +3,7 @@ using Protocol;
 using FlatBuffers;
 using Lidgren.Network;
 
-namespace Prototype
+namespace Prototype.Server
 {
     public sealed partial class PlayerManager
     {
@@ -31,6 +31,7 @@ namespace Prototype
                 NetOutgoingMessage msg = Server.Instance.netlayer.CreateMessage(MessageID.Msg_SC_FullUpdate, fbb);
                 player.connection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, 0);
                 player.state = Player.State.Playing;
+                // send new player message to other players
             }
             return MessageHandleResult.Finished;
         }

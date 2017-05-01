@@ -5,7 +5,7 @@ using Protocol;
 using FlatBuffers;
 using Lidgren.Network;
 
-namespace Prototype
+namespace Prototype.Game
 {
     public sealed class PlayerManagerClient : SingletonBehaviour<PlayerManagerClient>
     {
@@ -33,6 +33,11 @@ namespace Prototype
             return null;
         }
 
+        // TODO:
+        //  player update messages:
+        //  1. player list (for newcomer)
+        //  2. new player (for other players)
+        //  3. remove player (for other players)
         public void UpdatePlayers(Msg_SC_UpdatePlayers msg)
         {
             foreach (var p in mPlayers)
@@ -53,6 +58,9 @@ namespace Prototype
             ByteBuffer byteBuffer,
             NetIncomingMessage message)
         {
+            Msg_SC_UpdatePlayers updateplayers = InstancePool.Get<Msg_SC_UpdatePlayers>();
+            Msg_SC_UpdatePlayers.GetRootAsMsg_SC_UpdatePlayers(byteBuffer, updateplayers);
+            UpdatePlayers(updateplayers);
             return MessageHandleResult.Finished;
         }
 

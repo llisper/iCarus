@@ -5,7 +5,7 @@ using iCarus.Network;
 using iCarus.Singleton;
 using Foundation;
 
-namespace Prototype
+namespace Prototype.Game
 {
     public class TCLog : Logging.Define<TCLog> { }
     public class ClientException : Exception { }

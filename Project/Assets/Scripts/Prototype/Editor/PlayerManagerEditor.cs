@@ -4,7 +4,7 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 
-namespace Prototype
+namespace Prototype.Server
 {
     [CustomEditor(typeof(PlayerManager))]
     public class PlayerManagerEditor : Editor

@@ -1,11 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using iCarus.Singleton;
-using Lidgren.Network;
-using Foundation;
 using Protocol;
+using Foundation;
+using Lidgren.Network;
+using Prototype.Common;
 
-namespace Prototype
+namespace Prototype.Server
 {
     public sealed partial class PlayerManager : SingletonBehaviour<PlayerManager>
     {

@@ -2,6 +2,7 @@
 using FlatBuffers;
 using iCarus.Network;
 using Lidgren.Network;
+using Prototype.Game;
 
 namespace Prototype.GameState
 {

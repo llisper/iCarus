@@ -1,6 +1,6 @@
 using UnityEditor;
 
-namespace Prototype
+namespace Prototype.Server
 {
     [CustomEditor(typeof(Server))]
     class ServerEditor : Editor
