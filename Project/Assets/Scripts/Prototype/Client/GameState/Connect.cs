@@ -24,8 +24,8 @@ namespace Prototype.GameState
         {
             UdpConnector.Configuration config = new UdpConnector.Configuration()
             {
-                host = AppConfig.Instance.pacMan.host,
-                port = AppConfig.Instance.pacMan.port,
+                host = Game.Game.Instance.serverHost,
+                port = Game.Game.Instance.serverPort,
                 netPeerConfig = new NetPeerConfiguration(AppConfig.Instance.pacMan.appIdentifier)
                 {
                     DefaultOutgoingMessageCapacity = AppConfig.Instance.defaultOutgoingMessageCapacity,
@@ -45,7 +45,7 @@ namespace Prototype.GameState
             {
                 GameStateLog.Info("connect net status:" + status);
                 if (status == NetConnectionStatus.Connected)
-                    TransitTo<VerifyIdentity>();
+                    TransitTo<Login>();
             }
             else
             {

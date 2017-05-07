@@ -12,17 +12,13 @@ table Msg_SC_Snapshot
 
 table Msg_SC_UpdatePlayers
 {
-    players:[Player];
+    clear:bool;
+    add_players:[Player];
+    remove_players:[int];
 }
 
 table Msg_CS_FullUpdate
 {
-}
-
-table Msg_SC_FullUpdate
-{
-    players:Msg_SC_UpdatePlayers;    
-    snapshot:Msg_SC_Snapshot;
 }
 
 table Msg_CS_InputDataArray
@@ -30,16 +26,18 @@ table Msg_CS_InputDataArray
     input_data:[InputData];
 }
 
-table Msg_CS_NetIdentity
+table Msg_CS_Login
 {
     name:string;
+    color:int;
 }
- 
-table Msg_SC_NetIdentity
+
+table Msg_SC_Login
 {
     success:bool;
     error:string;
     id:int;
+    players:Msg_SC_UpdatePlayers;
 }
 
 table Msg_SC_Reconnect

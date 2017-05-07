@@ -29,7 +29,7 @@ namespace Prototype.Server
             mIdGen = new IdGen(IdRange.players);
             var dispatcher = Server.Instance.netlayer.dispatcher;
             dispatcher.Subscribe(MessageID.Msg_CS_InputDataArray, InputDataArrayHandler);
-            dispatcher.Subscribe(MessageID.Msg_CS_NetIdentity, NetIdentityHandler);
+            dispatcher.Subscribe(MessageID.Msg_CS_Login, LoginHandler);
             dispatcher.Subscribe(MessageID.Msg_CS_FullUpdate, FullUpdateHandler);
         }
 
@@ -89,6 +89,16 @@ namespace Prototype.Server
             foreach (var p in mPlayers)
             {
                 if (p.connection == connection)
+                    return p;
+            }
+            return null;
+        }
+
+        Player Get(int id)
+        {
+            foreach (var p in mPlayers)
+            {
+                if (p.id == id)
                     return p;
             }
             return null;

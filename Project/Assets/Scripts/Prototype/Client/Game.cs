@@ -17,7 +17,9 @@ namespace Prototype.Game
         public uint   snapshotOverTick { get; private set; }
 
         public int id { get; set; }
-        public string playerName { get; private set; }
+        public string playerName { get; set; }
+        public string serverHost { get; set; }
+        public int serverPort { get; set; }
 
         public UdpConnector netlayer { get; private set; }
         public GameState.GameState gameState { get { return mGameState; } }
@@ -36,7 +38,6 @@ namespace Prototype.Game
             tickrate = AppConfig.Instance.tickrate;
             cmdrate = AppConfig.Instance.cmdrate;
             snapshotOverTick = (uint)Mathf.FloorToInt(updaterate / tickrate);
-            this.playerName = "anonymous player";
 
             Singletons.Add<InputManager>();
             Singletons.Add<SyncManagerClient>();

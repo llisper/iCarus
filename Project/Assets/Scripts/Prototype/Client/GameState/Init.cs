@@ -1,5 +1,6 @@
 ﻿using iCarus.Log;
 using Prototype.Game;
+using SimpleUI;
 
 namespace Prototype.GameState
 {
@@ -14,7 +15,15 @@ namespace Prototype.GameState
             GameStateLog.Info("Init SyncManagerClient");
             PlayerManagerClient.Instance.Initialize();
             GameStateLog.Info("Init PlayerManagerClient");
-            TransitTo<Connect>();
+
+            SimpleUI.Login login = UI.Instance.Show<SimpleUI.Login>();
+            login.onJoinGame = (host, port, name) =>
+            {
+                game.serverHost = host;
+                game.serverPort = port;
+                game.playerName = name;
+                TransitTo<Connect>();
+            };
         }
 
         protected override void Update() { }

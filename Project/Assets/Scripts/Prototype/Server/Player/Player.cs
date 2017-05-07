@@ -31,7 +31,7 @@ namespace Prototype.Server
             mAckInputs = new uint[SyncManager.Instance.snapshotOverTick];
         }
 
-        public static Player New(int id, string playerName, NetConnection connection)
+        public static Player New(int id, string playerName, Color color, NetConnection connection)
         {
             Player newPlayer = new Player()
             {

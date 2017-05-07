@@ -1,8 +1,8 @@
-﻿using Protocol;
+﻿using iCarus.Network;
+using Protocol;
 using FlatBuffers;
-using iCarus.Network;
-using Lidgren.Network;
 using Prototype.Game;
+using Lidgren.Network;
 
 namespace Prototype.GameState
 {
@@ -11,7 +11,7 @@ namespace Prototype.GameState
         public override void Start()
         {
             game.netlayer.onNetStatusChanged += MonitorNetwork;
-            game.netlayer.dispatcher.Subscribe(MessageID.Msg_SC_FullUpdate, FullUpdateHandler);
+            game.netlayer.dispatcher.Subscribe(MessageID.Msg_SC_Snapshot, SnapshotHandler);
             FullUpdateRequest();
         }
 
@@ -22,7 +22,7 @@ namespace Prototype.GameState
         protected override void Destroy()
         {
             game.netlayer.onNetStatusChanged -= MonitorNetwork;
-            game.netlayer.dispatcher.Unsubscribe(MessageID.Msg_SC_FullUpdate, FullUpdateHandler);
+            game.netlayer.dispatcher.Unsubscribe(MessageID.Msg_SC_Snapshot, SnapshotHandler);
         }
 
         void FullUpdateRequest()
@@ -38,20 +38,13 @@ namespace Prototype.GameState
             GameStateLog.Info("full update request");
         }
 
-        MessageHandleResult FullUpdateHandler(
+        MessageHandleResult SnapshotHandler(
             NetConnection connection,
             ByteBuffer byteBuffer,
             NetIncomingMessage message)
         {
-            Msg_SC_FullUpdate fullupdate = InstancePool.Get<Msg_SC_FullUpdate>();
-            Msg_SC_FullUpdate.GetRootAsMsg_SC_FullUpdate(byteBuffer, fullupdate);
-
-            Msg_SC_UpdatePlayers updateplayers = InstancePool.Get<Msg_SC_UpdatePlayers>();
-            fullupdate.GetPlayers(updateplayers);
-            PlayerManagerClient.Instance.UpdatePlayers(updateplayers);
-
             Msg_SC_Snapshot snapshot = InstancePool.Get<Msg_SC_Snapshot>();
-            fullupdate.GetSnapshot(snapshot);
+            Msg_SC_Snapshot.GetRootAsMsg_SC_Snapshot(byteBuffer, snapshot);
             SyncManagerClient.Instance.FullUpdate(snapshot);
             GameStateLog.Info("apply full update");
             TransitTo<InGame>();

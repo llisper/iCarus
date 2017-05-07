@@ -40,16 +40,29 @@ namespace Prototype.Game
         //  3. remove player (for other players)
         public void UpdatePlayers(Msg_SC_UpdatePlayers msg)
         {
-            foreach (var p in mPlayers)
-                p.Dispose();
-            mPlayers.Clear();
+            if (msg.Clear)
+            {
+                foreach (var p in mPlayers)
+                    p.Dispose();
+                mPlayers.Clear();
+            }
 
             Protocol.Player playerData = InstancePool.Get<Protocol.Player>();
-            for (int i = 0; i < msg.PlayersLength; ++i)
+            for (int i = 0; i < msg.AddPlayersLength; ++i)
             {
-                msg.GetPlayers(playerData, i);
+                msg.GetAddPlayers(playerData, i);
                 PlayerClient newPlayer = PlayerClient.New(playerData);
                 mPlayers.Add(newPlayer);
+            }
+           
+            for (int i = 0; i < msg.RemovePlayersLength; ++i)
+            {
+                PlayerClient removePlayer = Get(msg.GetRemovePlayers(i));
+                if (null != removePlayer)
+                {
+                    removePlayer.Dispose();
+                    mPlayers.Remove(removePlayer);
+                }
             }
         }
 

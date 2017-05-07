@@ -58,7 +58,7 @@ namespace Prototype.GameState
             if (msg.Success)
                 TransitTo<DataFullUpdate>();
             else
-                TransitTo<VerifyIdentity>();
+                TransitTo<Login>();
             return MessageHandleResult.Finished;
         }
 

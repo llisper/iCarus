@@ -1,4 +1,6 @@
-﻿using iCarus.Network;
+﻿using UnityEngine;
+using iCarus;
+using iCarus.Network;
 using Protocol;
 using FlatBuffers;
 using Lidgren.Network;
@@ -22,39 +24,16 @@ namespace Prototype.Server
             using (var builder = MessageBuilder.Get())
             {
                 var fbb = builder.fbb;
-                var offset = Msg_SC_FullUpdate.CreateMsg_SC_FullUpdate(
-                    fbb,
-                    SyncPlayers(fbb),
-                    SyncManager.Instance.SampleSnapshot(fbb, true));
-                fbb.Finish(offset.Value);
+                fbb.Finish(SyncManager.Instance.SampleSnapshot(fbb, true).Value);
 
-                NetOutgoingMessage msg = Server.Instance.netlayer.CreateMessage(MessageID.Msg_SC_FullUpdate, fbb);
+                NetOutgoingMessage msg = Server.Instance.netlayer.CreateMessage(MessageID.Msg_SC_Snapshot, fbb);
                 player.connection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, 0);
                 player.state = Player.State.Playing;
-                // send new player message to other players
             }
             return MessageHandleResult.Finished;
         }
 
-        Offset<Msg_SC_UpdatePlayers> SyncPlayers(FlatBufferBuilder fbb)
-        {
-            VectorOffset pvOffset = default(VectorOffset);
-            if (mPlayers.Count > 0)
-            {
-                var array = OffsetArrayPool.Alloc<Protocol.Player>(mPlayers.Count);
-                foreach (var p in mPlayers)
-                {
-                    var offset = Protocol.Player.CreatePlayer(fbb, p.id, fbb.CreateString(p.playerName));
-                    array.offsets[array.position++] = offset;
-                }
-                Msg_SC_UpdatePlayers.StartPlayersVector(fbb, array.position);
-                pvOffset = Helpers.SetVector(fbb, array);
-                OffsetArrayPool.Dealloc(ref array);
-            }
-            return Msg_SC_UpdatePlayers.CreateMsg_SC_UpdatePlayers(fbb, pvOffset);
-        }
-
-        MessageHandleResult NetIdentityHandler(
+        MessageHandleResult LoginHandler(
             NetConnection connection, 
             ByteBuffer byteBuffer,
             NetIncomingMessage message)
@@ -80,9 +59,10 @@ namespace Prototype.Server
                 else
                 {
                     mAuthingConnections.RemoveAt(index);
-                    Msg_CS_NetIdentity msg = InstancePool.Get<Msg_CS_NetIdentity>();
-                    Msg_CS_NetIdentity.GetRootAsMsg_CS_NetIdentity(byteBuffer, msg);
-                    Player newPlayer = Player.New(mIdGen.Alloc(), msg.Name, connection);
+                    Msg_CS_Login msg = InstancePool.Get<Msg_CS_Login>();
+                    Msg_CS_Login.GetRootAsMsg_CS_Login(byteBuffer, msg);
+                    Color color = (new Color()).FromInt(msg.Color);
+                    Player newPlayer = Player.New(mIdGen.Alloc(), msg.Name, color, connection);
                     mPlayers.Add(newPlayer);
                     success = true;
                     id = newPlayer.id;
@@ -93,19 +73,75 @@ namespace Prototype.Server
             using (var builder = MessageBuilder.Get())
             {
                 var fbb = builder.fbb;
-                var errorOffset = !success ? fbb.CreateString(error) : default(StringOffset);
-                Msg_SC_NetIdentity.StartMsg_SC_NetIdentity(fbb);
-                Msg_SC_NetIdentity.AddSuccess(fbb, success);
-                if (success)
-                    Msg_SC_NetIdentity.AddId(fbb, id);
-                else
-                    Msg_SC_NetIdentity.AddError(fbb, errorOffset);
-                fbb.Finish(Msg_SC_NetIdentity.EndMsg_SC_NetIdentity(fbb).Value);
+                StringOffset errorOffset = default(StringOffset);
+                Offset<Msg_SC_UpdatePlayers> playersOffset = default(Offset<Msg_SC_UpdatePlayers>);
 
-                NetOutgoingMessage msg = Server.Instance.netlayer.CreateMessage(MessageID.Msg_SC_NetIdentity, fbb);
+                if (success)
+                    playersOffset = SyncPlayerList(fbb);
+                else
+                    errorOffset = fbb.CreateString(error);
+
+                Msg_SC_Login.StartMsg_SC_Login(fbb);
+                Msg_SC_Login.AddSuccess(fbb, success);
+                if (success)
+                    Msg_SC_Login.AddId(fbb, id);
+                else
+                    Msg_SC_Login.AddError(fbb, errorOffset);
+                Msg_SC_Login.AddPlayers(fbb, playersOffset);
+                fbb.Finish(Msg_SC_Login.EndMsg_SC_Login(fbb).Value);
+
+                NetOutgoingMessage msg = Server.Instance.netlayer.CreateMessage(MessageID.Msg_SC_Login, fbb);
                 connection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, 0);
             }
+
+            if (success)
+            {
+                FlatBufferBuilder fbb = new FlatBufferBuilder(64);
+                fbb.Finish(SyncNewPlayer(fbb, id).Value);
+                foreach (var p in mPlayers)
+                {
+                    if (p.connection != connection)
+                    {
+                        NetOutgoingMessage msg = Server.Instance.netlayer.CreateMessage(MessageID.Msg_SC_UpdatePlayers, fbb);
+                        p.connection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, 0);
+                    }
+                }
+            }
             return MessageHandleResult.Finished;
+        }
+
+        Offset<Msg_SC_UpdatePlayers> SyncPlayerList(FlatBufferBuilder fbb)
+        {
+            VectorOffset pvOffset = default(VectorOffset);
+            if (mPlayers.Count > 0)
+            {
+                var array = OffsetArrayPool.Alloc<Protocol.Player>(mPlayers.Count);
+                foreach (var p in mPlayers)
+                {
+                    var offset = Protocol.Player.CreatePlayer(fbb, p.id, fbb.CreateString(p.playerName));
+                    array.offsets[array.position++] = offset;
+                }
+                Msg_SC_UpdatePlayers.StartAddPlayersVector(fbb, array.position);
+                pvOffset = Helpers.SetVector(fbb, array);
+                OffsetArrayPool.Dealloc(ref array);
+            }
+            return Msg_SC_UpdatePlayers.CreateMsg_SC_UpdatePlayers(fbb, true, pvOffset);
+        }
+
+        Offset<Msg_SC_UpdatePlayers> SyncNewPlayer(FlatBufferBuilder fbb, int id)
+        {
+            VectorOffset pvOffset = default(VectorOffset);
+            Player p = Get(id);
+            if (null != p)
+            {
+                var array = OffsetArrayPool.Alloc<Protocol.Player>(1);
+                var offset = Protocol.Player.CreatePlayer(fbb, p.id, fbb.CreateString(p.playerName));
+                array.offsets[array.position++] = offset;
+                Msg_SC_UpdatePlayers.StartAddPlayersVector(fbb, array.position);
+                pvOffset = Helpers.SetVector(fbb, array);
+                OffsetArrayPool.Dealloc(ref array);
+            }
+            return Msg_SC_UpdatePlayers.CreateMsg_SC_UpdatePlayers(fbb, false, pvOffset);
         }
 
         MessageHandleResult InputDataArrayHandler(

@@ -21,7 +21,6 @@ namespace Prototype.Game
         public override void Init(int id, AvatarClient avatar)
         {
             base.Init(id, avatar);
-            common.interpolate = predict;
         }
 
         public override void FullUpdate(TickObject obj)
